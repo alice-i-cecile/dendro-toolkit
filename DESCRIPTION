@@ -1,0 +1,9 @@
+Package: dendro-toolkit
+Type: Package
+Title: Techniques for tree rings
+Version: 0.0
+Date: 2014-02-18
+Author: Alice I. Cecile
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: New standardization techniques for dendrochronological analysis of tree rings
+License: The MIT License
