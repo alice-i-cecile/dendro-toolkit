@@ -12,7 +12,7 @@ standardize_alternate <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), for
   }
   
   # Create storage for the estimated effects
-  effects <-vector(mode="list", length=3)
+  effects <- vector(mode="list", length=3)
   names (effects) <- c("I","T","A")
   
   # Dummy starting effects
@@ -85,4 +85,5 @@ standardize_alternate <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), for
   }
   
   return (effects)
+  
 }
