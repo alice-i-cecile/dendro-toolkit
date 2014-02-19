@@ -241,3 +241,38 @@ rwl.to.stra <- function (rwl, birth_years=NULL)
   return(stra)
   
 }
+
+# Converting from sparse tree ring arrays back to rwl tables ####
+
+# Often loses information about age, sometimes metadata
+stra_to_rwl <- function(stra, data_column="Growth")
+{
+  # Create the base table
+  tree_names <- unique(stra$Tree)
+
+  years <- unique(stra$Year)
+  years <- sort(as.numeric(as.character(year)))
+  
+  num_trees <- length(tree_names)
+  num_years <- length(years)
+  
+  rwl <- as.data.frame(matrix(data=NA, nrow=num_year, ncol=num_trees, dimnames=list(years, trees)))
+  
+  # Fill in data
+  for (i in 1:nrows(stra))
+  {
+    
+    # Extract year and tree coordinates
+    tree <- stra[i, "Tree"]
+    year <- stra[i, "Year"]
+    
+    tree_index <- which(names(rwl)==tree)
+    year_index <- which(rownames(rwl)==year)
+      
+    # Convert growth data
+    rwl[year_index, tree_index] <- stra[i, data_column]
+  }
+  
+  return(rwl)
+  
+}
