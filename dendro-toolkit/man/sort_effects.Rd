@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-sort_effects(effects, tra, sparse = TRUE)
+sort_effects(effects, tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ sort_effects(effects, tra, sparse = TRUE)
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,23 +50,14 @@ sort_effects(effects, tra, sparse = TRUE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (effects, tra, sparse = TRUE) 
+function (effects, tra) 
 {
-    if (sparse) {
-        sorted_effects <- list()
-        effect_names <- names(effects$I)
-        sorted_effects$I <- effects$I[sort(effect_names)]
-        for (j in c("T", "A")) {
-            effect_names <- as.numeric(names(effects[[j]]))
-            sorted_effects[[j]] <- effects[[j]][as.character(sort(effect_names))]
-        }
-    }
-    else {
-        sorted_effects <- effects
-        for (i in 1:3) {
-            correct_order <- dimnames(tra)[[i]]
-            sorted_effects[[i]] <- effects[[i]][correct_order]
-        }
+    sorted_effects <- list()
+    effect_names <- names(effects$I)
+    sorted_effects$I <- effects$I[sort(effect_names)]
+    for (j in c("T", "A")) {
+        effect_names <- as.numeric(names(effects[[j]]))
+        sorted_effects[[j]] <- effects[[j]][as.character(sort(effect_names))]
     }
     return(sorted_effects)
   }

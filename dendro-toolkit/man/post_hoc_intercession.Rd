@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-post_hoc_intercession(corrupted_effects, tra, sparse = TRUE, form = "multiplicative")
+post_hoc_intercession(corrupted_effects, tra = TRUE, form = "multiplicative")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ post_hoc_intercession(corrupted_effects, tra, sparse = TRUE, form = "multiplicat
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
   \item{form}{
 %%     ~~Describe \code{form} here~~
@@ -56,16 +53,15 @@ post_hoc_intercession(corrupted_effects, tra, sparse = TRUE, form = "multiplicat
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (corrupted_effects, tra, sparse = TRUE, form = "multiplicative") 
+function (corrupted_effects, tra = TRUE, form = "multiplicative") 
 {
-    optimal_m <- estimate_demons(corrupted_effects, tra, sparse, 
-        form)
+    optimal_m <- estimate_demons(corrupted_effects, tra, form)
     if (abs(optimal_m) > 0.99) {
         return(corrupted_effects)
     }
     print(paste("m of", optimal_m, "selected in choosing solution on likelihood ridge."))
     purified <- remove_demons(optimal_m, corrupted_effects, tra, 
-        sparse, form)
+        form)
     return(purified)
   }
 }

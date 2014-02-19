@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-model_fit_tra(effects, tra, model, form, error, sparse, method = "sfs", k = NA)
+model_fit_tra(effects, tra, model, form, error, method = "sfs", k = NA)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,9 +26,6 @@ model_fit_tra(effects, tra, model, form, error, sparse, method = "sfs", k = NA)
 }
   \item{error}{
 %%     ~~Describe \code{error} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
   \item{method}{
 %%     ~~Describe \code{method} here~~
@@ -68,46 +65,34 @@ model_fit_tra(effects, tra, model, form, error, sparse, method = "sfs", k = NA)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (effects, tra, model, form, error, sparse, method = "sfs", 
-    k = NA) 
+function (effects, tra, model, form, error, method = "sfs", k = NA) 
 {
     fit <- list()
     if (sum(unlist(model)) == 0) {
         fit$predicted <- tra
-        if (sparse) {
-            if (form == "additive") {
-                fit$predicted$G <- 0
-            }
-            else {
-                fit$predicted$G <- 1
-            }
+        if (form == "additive") {
+            fit$predicted$G <- 0
         }
         else {
-            if (form == "additive") {
-                fit$predicted[!is.na(fit$predicted)] <- 0
-            }
-            else {
-                fit$predicted[!is.na(fit$predicted)] <- 1
-            }
+            fit$predicted$G <- 1
         }
         fit$residuals <- tra
     }
     else {
-        fit$predicted <- predicted_tra(effects, tra, form, sparse)
-        fit$residuals <- residuals_tra(tra, fit$predicted, error, 
-            sparse)
+        fit$predicted <- predicted_tra(effects, tra, form)
+        fit$residuals <- residuals_tra(tra, fit$predicted, error)
     }
-    fit$n <- n_tra(tra, sparse)
+    fit$n <- n_tra(tra)
     if (method == "gam") {
         fit$k <- k
     }
     else {
-        fit$k <- k_tra(tra, model, sparse)
+        fit$k <- k_tra(tra, model)
     }
-    fit$sigma <- sigma_tra(fit$residuals, error, sparse)
-    fit$tss <- tss_tra(tra, error, sparse)
-    fit$rss <- rss_tra(fit$residuals, error, sparse)
-    fit$llh <- llh_tra(fit$residuals, error, sparse)
+    fit$sigma <- sigma_tra(fit$residuals, error)
+    fit$tss <- tss_tra(tra, error)
+    fit$rss <- rss_tra(fit$residuals, error)
+    fit$llh <- llh_tra(fit$residuals, error)
     fit$Rsq <- Rsq_tra(fit$rss, fit$tss)
     fit$adj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
     fit$AIC <- AIC_tra(fit$llh, fit$k)

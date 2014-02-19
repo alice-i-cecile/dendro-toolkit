@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-standardize_tra(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", error = "lnorm", method = "sfs", sparse = TRUE, post_hoc = TRUE, ...)
+standardize_tra(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", error = "lnorm", method = "sfs", post_hoc = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,9 +26,6 @@ standardize_tra(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multip
 }
   \item{method}{
 %%     ~~Describe \code{method} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
   \item{post_hoc}{
 %%     ~~Describe \code{post_hoc} here~~
@@ -69,8 +66,7 @@ standardize_tra(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multip
 
 ## The function is currently defined as
 function (tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", 
-    error = "lnorm", method = "sfs", sparse = TRUE, post_hoc = TRUE, 
-    ...) 
+    error = "lnorm", method = "sfs", post_hoc = TRUE, ...) 
 {
     if (ifelse(is.data.frame(tra), sum(tra$G <= 0), sum(tra[tra <= 
         0], na.rm = TRUE) > 0)) {
@@ -87,28 +83,25 @@ function (tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicati
     }
     if (method == "likelihood") {
         out <- standardize_likelihood(tra, model, form, error, 
-            sparse, ...)
+            ...)
     }
     else if (method == "least_squares") {
         out <- standardize_least_squares(tra, model, form, error, 
-            sparse, ...)
+            ...)
     }
     else if (method == "sfs") {
-        out <- standardize_tsfs(tra, model, form, error, sparse, 
-            ...)
+        out <- standardize_tsfs(tra, model, form, error, ...)
     }
     else if (method == "rcs") {
-        out <- standardize_rcs(tra, model, form, error, sparse, 
-            ...)
+        out <- standardize_rcs(tra, model, form, error, ...)
     }
     else if (method == "gam") {
-        out <- standardize_gam(tra, model, form, error, sparse, 
-            ...)
+        out <- standardize_gam(tra, model, form, error, ...)
     }
     if (sum(unlist(model)) == 3) {
         if (post_hoc) {
             out$effects <- post_hoc_intercession(out$effects, 
-                out$tra, sparse, form)
+                out$tra, form)
             warning("Three effect model selected. Post-hoc selection was used to stabilize parameter estimates.")
         }
         else {

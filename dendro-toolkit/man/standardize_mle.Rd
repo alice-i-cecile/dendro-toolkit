@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-standardize_mle(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", error = "lnorm", sparse = TRUE, ...)
+standardize_mle(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", error = "lnorm", ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,9 +23,6 @@ standardize_mle(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multip
 }
   \item{error}{
 %%     ~~Describe \code{error} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
   \item{\dots}{
 %%     ~~Describe \code{\dots} here~~
@@ -63,37 +60,27 @@ standardize_mle(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multip
 
 ## The function is currently defined as
 function (tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", 
-    error = "lnorm", sparse = TRUE, ...) 
+    error = "lnorm", ...) 
 {
-    if (sparse) {
-        if (!is.data.frame(tra)) {
-            tra <- sparse_tra(tra)
-        }
-    }
-    else {
-        if (is.data.frame(tra)) {
-            tra <- unsparse_tra(tra)
-        }
-    }
-    dummy_effects <- pad_effects(list(), tra, form, sparse)
+    dummy_effects <- pad_effects(list(), tra, form)
     flat_effects0 <- flatten_effects(dummy_effects, model)
     fes_likelihood <- function(flat_effects) {
         effects <- unflatten_effects(flat_effects)
-        effects <- pad_effects(effects, tra, form, sparse)
-        predicted <- predicted_tra(effects, tra, form, sparse)
-        residuals <- residuals_tra(tra, predicted, error, sparse)
-        llh <- llh_tra(residuals, error, sparse)
+        effects <- pad_effects(effects, tra, form)
+        predicted <- predicted_tra(effects, tra, form)
+        residuals <- residuals_tra(tra, predicted, error)
+        llh <- llh_tra(residuals, error)
         return(-llh)
     }
     mle_solution <- optim(flat_effects0, fes_likelihood, ...)
     print(mle_solution[2:5])
     effects <- unflatten_effects(mle_solution$par)
-    effects <- pad_effects(effects, tra, form, sparse)
-    effects <- sort_effects(effects, tra, sparse)
+    effects <- pad_effects(effects, tra, form)
+    effects <- sort_effects(effects, tra)
     effects <- rescale_effects(effects, form)
-    fit <- model_fit_tra(effects, tra, model, form, error, sparse)
+    fit <- model_fit_tra(effects, tra, model, form, error)
     settings <- list(model = model, form = form, error = error, 
-        sparse = sparse, method = "likelihood", ...)
+        method = "likelihood", ...)
     out <- list(effects = effects, tra = tra, fit = fit, settings = settings)
     return(out)
   }

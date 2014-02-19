@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-k_tra(tra, model, sparse)
+k_tra(tra, model)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ k_tra(tra, model, sparse)
 }
   \item{model}{
 %%     ~~Describe \code{model} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,36 +50,20 @@ k_tra(tra, model, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, model, sparse) 
+function (tra, model) 
 {
-    if (sparse) {
-        k <- 1
-        if (model$I) {
-            k <- k + nlevels(tra$i)
-        }
-        if (model$T) {
-            k <- k + nlevels(tra$t)
-        }
-        if (model$A) {
-            k <- k + nlevels(tra$a)
-        }
-        num_effects <- sum(unlist(model))
-        k <- ifelse(num_effects > 0, k - (num_effects - 1), 0)
+    k <- 1
+    if (model$I) {
+        k <- k + nlevels(tra$i)
     }
-    else {
-        k <- 1
-        if (model$I) {
-            k <- k + dim(tra)[1]
-        }
-        if (model$T) {
-            k <- k + dim(tra)[2]
-        }
-        if (model$A) {
-            k <- k + dim(tra)[3]
-        }
-        num_effects <- sum(unlist(model))
-        k <- ifelse(num_effects > 0, k - (num_effects - 1), 0)
+    if (model$T) {
+        k <- k + nlevels(tra$t)
     }
+    if (model$A) {
+        k <- k + nlevels(tra$a)
+    }
+    num_effects <- sum(unlist(model))
+    k <- ifelse(num_effects > 0, k - (num_effects - 1), 0)
     return(k)
   }
 }

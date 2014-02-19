@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-est_effect(tra, factor.dim, mean_type = "arithmetic", sparse = TRUE)
+est_effect(tra, factor.dim, mean_type = "arithmetic")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,9 +20,6 @@ est_effect(tra, factor.dim, mean_type = "arithmetic", sparse = TRUE)
 }
   \item{mean_type}{
 %%     ~~Describe \code{mean_type} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -56,30 +53,20 @@ est_effect(tra, factor.dim, mean_type = "arithmetic", sparse = TRUE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, factor.dim, mean_type = "arithmetic", sparse = TRUE) 
+function (tra, factor.dim, mean_type = "arithmetic") 
 {
-    if (sparse) {
-        id <- factor.dim + 1
-        estimate_effect <- function(id_i) {
-            data <- tra[tra[[id]] == id_i, "G"]
-            if (mean_type == "geometric") {
-                est_effect <- geomMean(data)
-            }
-            else {
-                est_effect <- mean(data, na.rm = TRUE)
-            }
-            return(est_effect)
-        }
-        est_effect <- sapply(levels(tra[[id]]), estimate_effect)
-    }
-    else {
+    id <- factor.dim + 1
+    estimate_effect <- function(id_i) {
+        data <- tra[tra[[id]] == id_i, "G"]
         if (mean_type == "geometric") {
-            est_effect <- apply(tra, factor.dim, geomMean)
+            est_effect <- geomMean(data)
         }
         else {
-            est_effect <- apply(tra, factor.dim, mean, na.rm = TRUE)
+            est_effect <- mean(data, na.rm = TRUE)
         }
+        return(est_effect)
     }
+    est_effect <- sapply(levels(tra[[id]]), estimate_effect)
     return(est_effect)
   }
 }

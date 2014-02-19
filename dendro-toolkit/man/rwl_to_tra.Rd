@@ -1,5 +1,5 @@
-\name{rwl.to.tra}
-\alias{rwl.to.tra}
+\name{rwl_to_tra}
+\alias{rwl_to_tra}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-rwl.to.tra(rwl, birth_years = NULL)
+rwl_to_tra(rwl, birth_years = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -76,26 +76,22 @@ function (rwl, birth_years = NULL)
         birth_index[i] <- which(rownames(rwl) == toString(birth_years[i]))
     }
     names(birth_index) <- names(birth_years)
-    i.size <- ncol(rwl)
-    t.size <- nrow(rwl)
-    T.size <- t.size
-    tra <- array(NA, c(i.size, t.size, T.size), list(colnames(rwl), 
-        rownames(rwl), 1:T.size))
-    for (tree in 1:ncol(rwl)) {
+    filled <- which(!is.na(rwl), arr.ind = TRUE)
+    n_data_points <- nrow(filled)
+    add_growth_data <- function(year, tree) {
         birth <- birth_index[tree]
-        for (year in 1:nrow(rwl)) {
-            age <- year - birth + 1
-            datum <- rwl[year, tree]
-            if (!is.na(datum)) {
-                tra[tree, year, age] <- datum
-            }
-        }
+        G <- rwl[year, tree]
+        i <- names(rwl)[tree]
+        t <- rownames(rwl)[year]
+        a <- year - birth + 1
+        out <- list(G, i, t, a)
+        return(out)
     }
-    empty_tra <- is.na(tra)
-    empty_Q <- apply(empty_tra, 1, all)
-    empty_F <- apply(empty_tra, 2, all)
-    empty_A <- apply(empty_tra, 3, all)
-    tra <- tra[!empty_Q, !empty_F, !empty_A]
+    raw_tra <- mapply(add_growth_data, year = filled[, 1], tree = filled[, 
+        2], SIMPLIFY = FALSE)
+    tra <- data.frame(matrix(unlist(raw_tra), ncol = 4, byrow = TRUE))
+    names(tra) <- c("Growth", "Tree", "Year", "Age")
+    tra$Growth <- as.numeric(tra$Growth)
     return(tra)
   }
 }

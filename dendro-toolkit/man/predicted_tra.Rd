@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-predicted_tra(effects, tra, form, sparse)
+predicted_tra(effects, tra, form)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,9 +20,6 @@ predicted_tra(effects, tra, form, sparse)
 }
   \item{form}{
 %%     ~~Describe \code{form} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -56,39 +53,20 @@ predicted_tra(effects, tra, form, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (effects, tra, form, sparse) 
+function (effects, tra, form) 
 {
-    if (sparse) {
-        predicted <- tra
-        for (r in 1:nrow(predicted)) {
-            i <- as.character(tra[r, "i"])
-            t <- as.character(tra[r, "t"])
-            a <- as.character(tra[r, "a"])
-            if (form == "additive") {
-                predicted[r, "G"] <- effects$I[i] + effects$T[t] + 
-                  effects$A[a]
-            }
-            else {
-                predicted[r, "G"] <- effects$I[i] * effects$T[t] * 
-                  effects$A[a]
-            }
+    predicted <- tra
+    for (r in 1:nrow(predicted)) {
+        i <- as.character(tra[r, "i"])
+        t <- as.character(tra[r, "t"])
+        a <- as.character(tra[r, "a"])
+        if (form == "additive") {
+            predicted[r, "G"] <- effects$I[i] + effects$T[t] + 
+                effects$A[a]
         }
-    }
-    else {
-        predicted <- tra
-        filled_cells <- which(!is.na(tra), arr.ind = TRUE)
-        for (cell in 1:nrow(filled_cells)) {
-            i <- filled_cells[cell, 1]
-            t <- filled_cells[cell, 2]
-            a <- filled_cells[cell, 3]
-            if (form == "additive") {
-                predicted[i, t, a] <- effects$I[i] + effects$T[t] + 
-                  effects$A[a]
-            }
-            else {
-                predicted[i, t, a] <- effects$I[i] * effects$T[t] * 
-                  effects$A[a]
-            }
+        else {
+            predicted[r, "G"] <- effects$I[i] * effects$T[t] * 
+                effects$A[a]
         }
     }
     return(predicted)

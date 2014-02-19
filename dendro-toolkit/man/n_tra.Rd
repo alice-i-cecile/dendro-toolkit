@@ -8,15 +8,12 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-n_tra(tra, sparse)
+n_tra(tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -50,14 +47,9 @@ n_tra(tra, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, sparse) 
+function (tra) 
 {
-    if (sparse) {
-        n <- nrow(tra)
-    }
-    else {
-        n <- sum(!is.na(tra))
-    }
+    n <- nrow(tra)
     return(n)
   }
 }

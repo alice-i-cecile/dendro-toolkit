@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-estimate_demons(corrupted_effects, tra, sparse = TRUE, form = "multiplicative")
+estimate_demons(corrupted_effects, tra = TRUE, form = "multiplicative")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ estimate_demons(corrupted_effects, tra, sparse = TRUE, form = "multiplicative")
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
   \item{form}{
 %%     ~~Describe \code{form} here~~
@@ -56,9 +53,9 @@ estimate_demons(corrupted_effects, tra, sparse = TRUE, form = "multiplicative")
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (corrupted_effects, tra, sparse = TRUE, form = "multiplicative") 
+function (corrupted_effects, tra = TRUE, form = "multiplicative") 
 {
-    ridge_ids <- demonic_ritual(corrupted_effects, tra, sparse)
+    ridge_ids <- demonic_ritual(corrupted_effects, tra)
     if (form == "multiplicative") {
         corrupted_effects <- lapply(corrupted_effects, log)
     }
@@ -75,7 +72,7 @@ function (corrupted_effects, tra, sparse = TRUE, form = "multiplicative")
     }
     purify_probe <- function(m) {
         purified_effects <- remove_demons(m, corrupted_effects, 
-            tra, sparse, form = "additive")
+            tra, form = "additive")
         llh <- demonic_llh(purified_effects)
         return(-llh)
     }

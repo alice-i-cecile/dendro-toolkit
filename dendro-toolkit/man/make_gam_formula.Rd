@@ -8,12 +8,18 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-make_gam_formula(model)
+make_gam_formula(incQ, incF, incA)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{model}{
-%%     ~~Describe \code{model} here~~
+  \item{incQ}{
+%%     ~~Describe \code{incQ} here~~
+}
+  \item{incF}{
+%%     ~~Describe \code{incF} here~~
+}
+  \item{incA}{
+%%     ~~Describe \code{incA} here~~
 }
 }
 \details{
@@ -47,18 +53,18 @@ make_gam_formula(model)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (model) 
+function (incQ, incF, incA) 
 {
     dep.str <- "G"
     ind.str <- "0"
-    if (model$I) {
-        ind.str <- paste(ind.str, "i", sep = "+")
+    if (incQ) {
+        ind.str <- paste(ind.str, "Q.cv", sep = "+")
     }
-    if (model$T) {
-        ind.str <- paste(ind.str, "t", sep = "+")
+    if (incF) {
+        ind.str <- paste(ind.str, "F.cv", sep = "+")
     }
-    if (model$A) {
-        ind.str <- paste(ind.str, "s(as.numeric(as.character(a)), k=age_k, ...)", 
+    if (incA) {
+        ind.str <- paste(ind.str, "lo(A.num, span=span, degree=degree)", 
             sep = "+")
     }
     formula.str <- paste(dep.str, ind.str, sep = "~")

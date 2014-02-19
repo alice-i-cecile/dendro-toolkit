@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-add_demons(m = 1, effects, tra, sparse = TRUE, form = "multiplicative")
+add_demons(m = 1, effects, tra = TRUE, form = "multiplicative")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,9 +20,6 @@ add_demons(m = 1, effects, tra, sparse = TRUE, form = "multiplicative")
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
   \item{form}{
 %%     ~~Describe \code{form} here~~
@@ -59,9 +56,9 @@ add_demons(m = 1, effects, tra, sparse = TRUE, form = "multiplicative")
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (m = 1, effects, tra, sparse = TRUE, form = "multiplicative") 
+function (m = 1, effects, tra = TRUE, form = "multiplicative") 
 {
-    ridge_ids <- demonic_ritual(effects, tra, sparse)
+    ridge_ids <- demonic_ritual(effects, tra)
     corrupted_effects <- effects
     if (form == "multiplicative") {
         corrupted_effects <- lapply(corrupted_effects, log)

@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-standardize_sfs(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", error = "lnorm", sparse = TRUE, cor_threshold = 0.999999)
+standardize_sfs(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", error = "lnorm", cor_threshold = 0.999999)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,9 +23,6 @@ standardize_sfs(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multip
 }
   \item{error}{
 %%     ~~Describe \code{error} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
   \item{cor_threshold}{
 %%     ~~Describe \code{cor_threshold} here~~
@@ -63,24 +60,8 @@ standardize_sfs(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multip
 
 ## The function is currently defined as
 function (tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", 
-    error = "lnorm", sparse = TRUE, cor_threshold = 0.999999) 
+    error = "lnorm", cor_threshold = 0.999999) 
 {
-    if (sparse) {
-        if (!is.data.frame(tra)) {
-            tra <- sparse_tra(tra)
-        }
-    }
-    else {
-        if (is.data.frame(tra)) {
-            tra <- unsparse_tra(tra)
-        }
-    }
-    if (error == "lnorm") {
-        mean_type <- "geometric"
-    }
-    else {
-        mean_type <- "arithmetic"
-    }
     inc_effects <- names(model[unlist(model) == TRUE])
     name_dim_dict <- c(I = "I", T = "T", A = "A")
     effect_order <- match(inc_effects, name_dim_dict)
@@ -91,30 +72,18 @@ function (tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicati
         last_tra <- working_tra
         iteration <- iteration + 1
         print(paste("Iteration", iteration))
-        est_1 <- est_effect(working_tra, effect_order[1], mean_type, 
-            sparse)
+        est_1 <- est_effect(working_tra, effect_order[1], mean_type)
         intermediate_tra <- remove_effect(working_tra, est_1, 
-            effect_order[1], form, sparse)
+            effect_order[1], form)
         est_2 <- est_effect(intermediate_tra, effect_order[2], 
-            mean_type, sparse)
+            mean_type)
         working_tra <- remove_effect(working_tra, est_2, effect_order[2], 
-            form, sparse)
+            form)
         if (error == "norm") {
-            if (sparse) {
-                conv_cor <- cor(working_tra$G, last_tra$G)
-            }
-            else {
-                conv_cor <- cor(working_tra, last_tra, "complete.obs")
-            }
+            conv_cor <- cor(working_tra$G, last_tra$G)
         }
         else {
-            if (sparse) {
-                conv_cor <- cor(log(working_tra$G), log(last_tra$G))
-            }
-            else {
-                conv_cor <- cor(log(working_tra), log(last_tra), 
-                  "complete.obs")
-            }
+            conv_cor <- cor(log(working_tra$G), log(last_tra$G))
         }
         if (conv_cor >= cor_threshold) {
             converged <- TRUE
@@ -125,21 +94,19 @@ function (tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicati
     miss.dim <- all.dim[-intersect(effect_order, all.dim)]
     miss_effect <- rep.int(1, dim(tra)[[miss.dim]])
     names(miss_effect) <- dimnames(tra)[[miss.dim]]
-    prim_effect <- est_effect(working_tra, effect_order[1], mean_type, 
-        sparse)
+    prim_effect <- est_effect(working_tra, effect_order[1], mean_type)
     sec.series <- remove_effect(tra, prim_effect, effect_order[1], 
-        form, sparse)
-    sec_effect <- est_effect(sec.series, effect_order[2], mean_type, 
-        sparse)
+        form)
+    sec_effect <- est_effect(sec.series, effect_order[2], mean_type)
     effects <- list(prim_effect, sec_effect, miss_effect)
     effect_order <- order(c(effect_order[1], effect_order[2], 
         miss.dim))
     effects <- effects[effect_order]
-    effects <- sort_effects(effects, tra, sparse)
+    effects <- sort_effects(effects, tra)
     effects <- rescale_effects(effects, form)
-    fit <- model_fit_tra(effects, tra, model, form, error, sparse)
+    fit <- model_fit_tra(effects, tra, model, form, error)
     settings <- list(model = model, form = form, error = error, 
-        sparse = sparse, method = "old_sfs")
+        method = "old_sfs")
     out <- list(effects = effects, tra = tra, fit = fit, settings = settings)
     return(out)
   }

@@ -1,5 +1,5 @@
-\name{unsparse_tra}
-\alias{unsparse_tra}
+\name{tra_to_rwl}
+\alias{tra_to_rwl}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,12 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-unsparse_tra(stra)
+tra_to_rwl(tra, data_column = "Growth")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{stra}{
-%%     ~~Describe \code{stra} here~~
+  \item{tra}{
+%%     ~~Describe \code{tra} here~~
+}
+  \item{data_column}{
+%%     ~~Describe \code{data_column} here~~
 }
 }
 \details{
@@ -47,22 +50,23 @@ unsparse_tra(stra)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (stra) 
+function (tra, data_column = "Growth") 
 {
-    indices <- lapply(stra[2:ncol(stra)], levels)
-    indices[c("t", "a")] <- lapply(indices[c("t", "a")], as.numeric)
-    indices <- lapply(indices, sort)
-    indices[c("t", "a")] <- lapply(indices[c("t", "a")], as.character)
-    tra <- array(data = NA, dim = sapply(indices, length), dimnames = indices)
-    for (j in 1:nrow(stra)) {
-        stra_row <- stra[j, ]
-        i <- as.character(stra[j, "i"])
-        t <- as.character(stra[j, "t"])
-        a <- as.character(stra[j, "a"])
-        G <- stra[j, "G"]
-        tra[i, t, a] <- G
+    tree_names <- unique(tra$Tree)
+    years <- unique(tra$Year)
+    years <- sort(as.numeric(as.character(year)))
+    num_trees <- length(tree_names)
+    num_years <- length(years)
+    rwl <- as.data.frame(matrix(data = NA, nrow = num_year, ncol = num_trees, 
+        dimnames = list(years, trees)))
+    for (i in 1:nrows(tra)) {
+        tree <- tra[i, "Tree"]
+        year <- tra[i, "Year"]
+        tree_index <- which(names(rwl) == tree)
+        year_index <- which(rownames(rwl) == year)
+        rwl[year_index, tree_index] <- tra[i, data_column]
     }
-    return(tra)
+    return(rwl)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

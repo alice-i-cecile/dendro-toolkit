@@ -1,22 +1,16 @@
 # Demonic ritual ####
-demonic_ritual <- function(effects, tra, sparse=TRUE){
-  birth_years <- get_birth_years(tra, sparse)
-  birth_index <- sapply(birth_years, get_birth_index, tra=tra, sparse=sparse)
+demonic_ritual <- function(effects, tra=TRUE){
+  birth_years <- get_birth_years(tra)
+  birth_index <- sapply(birth_years, get_birth_index, tra=tra)
   k <- -birth_index
   
-  if (sparse){
-    years <- sort(as.numeric(levels(tra$t)))
-  } else {
-    years <- sort(as.numeric(dimnames(tra)[[2]]))
-  } 
+ years <- sort(as.numeric(levels(tra$t)))
+  
   year_index <- match(names(effects$T), as.character(years))
   names(year_index) <- names(effects$T)
   
-  if (sparse){
-    ages <- sort(as.numeric(levels(tra$a)))
-  } else {
-    ages <- sort(as.numeric(dimnames(tra)[[3]]))
-  }  
+  ages <- sort(as.numeric(levels(tra$a)))
+  
   age_index <- match(names(effects$A), as.character(ages))
   names(age_index) <- names(effects$A)
   
@@ -32,8 +26,8 @@ demonic_ritual <- function(effects, tra, sparse=TRUE){
 
 
 # Add a demonic intrusion ####
-add_demons <- function (m=1, effects, tra, sparse=TRUE, form="multiplicative"){
-  ridge_ids <- demonic_ritual(effects, tra, sparse)
+add_demons <- function (m=1, effects, tra=TRUE, form="multiplicative"){
+  ridge_ids <- demonic_ritual(effects, tra)
   
   corrupted_effects <- effects
   
@@ -62,8 +56,8 @@ add_demons <- function (m=1, effects, tra, sparse=TRUE, form="multiplicative"){
 }
 
 # Estimate a demonic intrusion ####
-estimate_demons <- function (corrupted_effects, tra, sparse=TRUE, form="multiplicative"){
-  ridge_ids <- demonic_ritual(corrupted_effects, tra, sparse)
+estimate_demons <- function (corrupted_effects, tra=TRUE, form="multiplicative"){
+  ridge_ids <- demonic_ritual(corrupted_effects, tra)
   
   
   if(form=="multiplicative")
@@ -88,7 +82,7 @@ estimate_demons <- function (corrupted_effects, tra, sparse=TRUE, form="multipli
   } 
 
   purify_probe <- function(m){
-    purified_effects <- remove_demons(m, corrupted_effects, tra, sparse, form="additive")
+    purified_effects <- remove_demons(m, corrupted_effects, tra, form="additive")
     llh <- demonic_llh(purified_effects)
     return(-llh)
   }
@@ -100,8 +94,8 @@ estimate_demons <- function (corrupted_effects, tra, sparse=TRUE, form="multipli
 
 
 # Remove a demonic intrusion ####
-remove_demons <- function (m=1, corrupted_effects, tra, sparse=TRUE, form="multiplicative"){
-  ridge_ids <- demonic_ritual(corrupted_effects, tra, sparse)
+remove_demons <- function (m=1, corrupted_effects, tra=TRUE, form="multiplicative"){
+  ridge_ids <- demonic_ritual(corrupted_effects, tra)
   
   effects <- corrupted_effects
   
@@ -129,9 +123,9 @@ remove_demons <- function (m=1, corrupted_effects, tra, sparse=TRUE, form="multi
 }
 
 # Full post-hoc correction of demonic intrusion ####
-post_hoc_intercession <- function(corrupted_effects, tra, sparse=TRUE, form="multiplicative")
+post_hoc_intercession <- function(corrupted_effects, tra=TRUE, form="multiplicative")
 {
-  optimal_m <- estimate_demons(corrupted_effects, tra, sparse, form)
+  optimal_m <- estimate_demons(corrupted_effects, tra, form)
   
   # Return suspiciously high trends
   if (abs(optimal_m) > 0.99){
@@ -139,7 +133,7 @@ post_hoc_intercession <- function(corrupted_effects, tra, sparse=TRUE, form="mul
   }
   
   print(paste("m of", optimal_m, "selected in choosing solution on likelihood ridge."))
-  purified <- remove_demons(optimal_m, corrupted_effects, tra, sparse, form)
+  purified <- remove_demons(optimal_m, corrupted_effects, tra, form)
   
   
   return(purified)

@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-sample_depth_tra(tra, factor.dim = 2, sparse = FALSE)
+sample_depth_tra(tra, factor.dim = 2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ sample_depth_tra(tra, factor.dim = 2, sparse = FALSE)
 }
   \item{factor.dim}{
 %%     ~~Describe \code{factor.dim} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,36 +50,20 @@ sample_depth_tra(tra, factor.dim = 2, sparse = FALSE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, factor.dim = 2, sparse = FALSE) 
+function (tra, factor.dim = 2) 
 {
-    if (sparse) {
-        if (!is.data.frame(tra)) {
-            tra <- sparse_tra(tra)
-        }
+    positions <- tra[[factor.dim + 1]]
+    ids <- levels(positions)
+    sample_depth <- sapply(ids, function(x) {
+        sum(positions == x)
+    })
+    if (factor.dim == 1) {
+        ordering <- sort(names(sample_depth))
     }
     else {
-        if (is.data.frame(tra)) {
-            tra <- unsparse_tra(tra)
-        }
+        ordering <- sort(as.numeric(names(sample_depth)))
     }
-    if (sparse) {
-        positions <- tra[[factor.dim + 1]]
-        ids <- levels(positions)
-        sample_depth <- sapply(ids, function(x) {
-            sum(positions == x)
-        })
-        if (factor.dim == 1) {
-            ordering <- sort(names(sample_depth))
-        }
-        else {
-            ordering <- sort(as.numeric(names(sample_depth)))
-        }
-        sample_depth <- sample_depth[sapply(ordering, as.character)]
-    }
-    else {
-        filled_cells <- !is.na(tra)
-        sample_depth <- apply(filled_cells, factor.dim, sum)
-    }
+    sample_depth <- sample_depth[sapply(ordering, as.character)]
     return(sample_depth)
   }
 }

@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-demonic_ritual(effects, tra, sparse = TRUE)
+demonic_ritual(effects, tra = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ demonic_ritual(effects, tra, sparse = TRUE)
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,26 +50,15 @@ demonic_ritual(effects, tra, sparse = TRUE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (effects, tra, sparse = TRUE) 
+function (effects, tra = TRUE) 
 {
-    birth_years <- get_birth_years(tra, sparse)
-    birth_index <- sapply(birth_years, get_birth_index, tra = tra, 
-        sparse = sparse)
+    birth_years <- get_birth_years(tra)
+    birth_index <- sapply(birth_years, get_birth_index, tra = tra)
     k <- -birth_index
-    if (sparse) {
-        years <- sort(as.numeric(levels(tra$t)))
-    }
-    else {
-        years <- sort(as.numeric(dimnames(tra)[[2]]))
-    }
+    years <- sort(as.numeric(levels(tra$t)))
     year_index <- match(names(effects$T), as.character(years))
     names(year_index) <- names(effects$T)
-    if (sparse) {
-        ages <- sort(as.numeric(levels(tra$a)))
-    }
-    else {
-        ages <- sort(as.numeric(dimnames(tra)[[3]]))
-    }
+    ages <- sort(as.numeric(levels(tra$a)))
     age_index <- match(names(effects$A), as.character(ages))
     names(age_index) <- names(effects$A)
     k <- k[!is.na(k)]

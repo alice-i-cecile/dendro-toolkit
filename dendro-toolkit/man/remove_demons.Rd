@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-remove_demons(m = 1, corrupted_effects, tra, sparse = TRUE, form = "multiplicative")
+remove_demons(m = 1, corrupted_effects, tra = TRUE, form = "multiplicative")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,9 +20,6 @@ remove_demons(m = 1, corrupted_effects, tra, sparse = TRUE, form = "multiplicati
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
   \item{form}{
 %%     ~~Describe \code{form} here~~
@@ -59,9 +56,9 @@ remove_demons(m = 1, corrupted_effects, tra, sparse = TRUE, form = "multiplicati
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (m = 1, corrupted_effects, tra, sparse = TRUE, form = "multiplicative") 
+function (m = 1, corrupted_effects, tra = TRUE, form = "multiplicative") 
 {
-    ridge_ids <- demonic_ritual(corrupted_effects, tra, sparse)
+    ridge_ids <- demonic_ritual(corrupted_effects, tra)
     effects <- corrupted_effects
     if (form == "multiplicative") {
         effects <- lapply(effects, log)

@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-remove_effect(tra, effect, factor.dim, form = "multiplicative", sparse = TRUE)
+remove_effect(tra, effect, factor.dim, form = "multiplicative")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,9 +23,6 @@ remove_effect(tra, effect, factor.dim, form = "multiplicative", sparse = TRUE)
 }
   \item{form}{
 %%     ~~Describe \code{form} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -59,26 +56,20 @@ remove_effect(tra, effect, factor.dim, form = "multiplicative", sparse = TRUE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, effect, factor.dim, form = "multiplicative", sparse = TRUE) 
+function (tra, effect, factor.dim, form = "multiplicative") 
 {
-    if (sparse) {
-        id <- factor.dim + 1
-        removed_tra <- tra
-        for (effect_id in names(effect)) {
-            relevant_rows <- tra[[id]] == effect_id
-            if (form == "additive") {
-                removed_tra[relevant_rows, "G"] <- removed_tra[relevant_rows, 
-                  "G"] - effect[effect_id]
-            }
-            else {
-                removed_tra[relevant_rows, "G"] <- removed_tra[relevant_rows, 
-                  "G"]/effect[effect_id]
-            }
+    id <- factor.dim + 1
+    removed_tra <- tra
+    for (effect_id in names(effect)) {
+        relevant_rows <- tra[[id]] == effect_id
+        if (form == "additive") {
+            removed_tra[relevant_rows, "G"] <- removed_tra[relevant_rows, 
+                "G"] - effect[effect_id]
         }
-    }
-    else {
-        FUN <- ifelse(form == "additive", "-", "/")
-        removed_tra <- sweep(tra, factor.dim, effect, FUN)
+        else {
+            removed_tra[relevant_rows, "G"] <- removed_tra[relevant_rows, 
+                "G"]/effect[effect_id]
+        }
     }
     return(removed_tra)
   }

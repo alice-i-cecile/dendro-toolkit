@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-residuals_tra(tra, predicted, error, sparse)
+residuals_tra(tra, predicted, error)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,9 +20,6 @@ residuals_tra(tra, predicted, error, sparse)
 }
   \item{error}{
 %%     ~~Describe \code{error} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -56,24 +53,14 @@ residuals_tra(tra, predicted, error, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, predicted, error, sparse) 
+function (tra, predicted, error) 
 {
-    if (sparse) {
-        residuals <- tra
-        if (error == "norm") {
-            residuals$G <- tra$G - predicted$G
-        }
-        else {
-            residuals$G <- tra$G/predicted$G
-        }
+    residuals <- tra
+    if (error == "norm") {
+        residuals$G <- tra$G - predicted$G
     }
     else {
-        if (error == "norm") {
-            residuals <- tra - predicted
-        }
-        else {
-            residuals <- tra/predicted
-        }
+        residuals$G <- tra$G/predicted$G
     }
     return(residuals)
   }

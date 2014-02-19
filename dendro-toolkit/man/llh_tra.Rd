@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-llh_tra(residuals, error, sparse)
+llh_tra(residuals, error)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ llh_tra(residuals, error, sparse)
 }
   \item{error}{
 %%     ~~Describe \code{error} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,27 +50,15 @@ llh_tra(residuals, error, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (residuals, error, sparse) 
+function (residuals, error) 
 {
-    if (sparse) {
-        sigma <- sigma_tra(residuals, error, sparse)
-        val <- residuals$G
-        if (error == "norm") {
-            llh <- sum(dnorm(val, sd = sigma, log = TRUE))
-        }
-        else {
-            llh <- sum(dlnorm(val, sd = sigma, log = TRUE))
-        }
+    sigma <- sigma_tra(residuals, error)
+    val <- residuals$G
+    if (error == "norm") {
+        llh <- sum(dnorm(val, sd = sigma, log = TRUE))
     }
     else {
-        sigma <- sigma_tra(residuals, error, sparse)
-        val <- residuals[!is.na(residuals)]
-        if (error == "norm") {
-            llh <- sum(dnorm(val, sd = sigma, log = TRUE))
-        }
-        else {
-            llh <- sum(dlnorm(val, sd = sigma, log = TRUE))
-        }
+        llh <- sum(dlnorm(val, sd = sigma, log = TRUE))
     }
     return(llh)
   }

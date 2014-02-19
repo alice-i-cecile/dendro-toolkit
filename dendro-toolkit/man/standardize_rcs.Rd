@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-standardize_rcs(tra, model = list(I = FALSE, A = TRUE, T = TRUE), form = "multiplicative", error = "lnorm", sparse = TRUE)
+standardize_rcs(tra, model = list(I = FALSE, A = TRUE, T = TRUE), form = "multiplicative", error = "lnorm")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,9 +23,6 @@ standardize_rcs(tra, model = list(I = FALSE, A = TRUE, T = TRUE), form = "multip
 }
   \item{error}{
 %%     ~~Describe \code{error} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -60,18 +57,8 @@ standardize_rcs(tra, model = list(I = FALSE, A = TRUE, T = TRUE), form = "multip
 
 ## The function is currently defined as
 function (tra, model = list(I = FALSE, A = TRUE, T = TRUE), form = "multiplicative", 
-    error = "lnorm", sparse = TRUE) 
+    error = "lnorm") 
 {
-    if (sparse) {
-        if (!is.data.frame(tra)) {
-            tra <- sparse_tra(tra)
-        }
-    }
-    else {
-        if (is.data.frame(tra)) {
-            tra <- unsparse_tra(tra)
-        }
-    }
     if (error == "lnorm") {
         mean_type <- "geometric"
     }
@@ -85,16 +72,16 @@ function (tra, model = list(I = FALSE, A = TRUE, T = TRUE), form = "multiplicati
     working_tra <- tra
     for (effect in effect_order) {
         effects[[effect]] <- est_effect(working_tra, effect, 
-            mean_type, sparse)
+            mean_type)
         working_tra <- remove_effect(working_tra, effects[[effect]], 
-            effect, form, sparse)
+            effect, form)
     }
     effects <- pad_effects(effects, tra, form, sparse)
     effects <- sort_effects(effects, tra, sparse)
     effects <- rescale_effects(effects, form)
-    fit <- model_fit_tra(effects, tra, model, form, error, sparse)
+    fit <- model_fit_tra(effects, tra, model, form, error)
     settings <- list(model = model, form = form, error = error, 
-        sparse = sparse, method = "rcs")
+        method = "rcs")
     out <- list(effects = effects, tra = tra, fit = fit, settings = settings)
     return(out)
   }

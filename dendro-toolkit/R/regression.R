@@ -1,7 +1,3 @@
-# Load dependencies ####
-library(foreach)
-library(gam)
-
 # Core regression function ####
 
 # Perform factor regression standardization on a tree ring array

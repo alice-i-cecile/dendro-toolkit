@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-sigma_tra(residuals, error, sparse)
+sigma_tra(residuals, error)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ sigma_tra(residuals, error, sparse)
 }
   \item{error}{
 %%     ~~Describe \code{error} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,22 +50,13 @@ sigma_tra(residuals, error, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (residuals, error, sparse) 
+function (residuals, error) 
 {
-    if (sparse) {
-        val <- residuals$G
-        if (error == "lnorm") {
-            val <- log(val)
-        }
-        sigma <- sd(val)
+    val <- residuals$G
+    if (error == "lnorm") {
+        val <- log(val)
     }
-    else {
-        val <- residuals[!is.na(residuals)]
-        if (error == "lnorm") {
-            val <- log(val)
-        }
-        sigma <- sd(val)
-    }
+    sigma <- sd(val)
     return(sigma)
   }
 }

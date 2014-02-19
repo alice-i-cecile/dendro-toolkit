@@ -1,15 +1,11 @@
-# Libraries ####
-library(mgcv)
-
 # Wrapper for standardizing tree ring data ####
 # tra: the tree-ring array data structure containing the data to be analysed
 # model: which effects (individual, time, age) to include in the model?
 # form: are the effects added together or multiplied together
 # error: is the data drawn from a normal additive PDF or a multiplicative log-normal PDF
 # method: which algorithm should we use to standardize the data?
-# sparse: use sparse list representation of data to reduce memory overhead
 
-standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", method="sfs", sparse=TRUE, post_hoc=TRUE, ...)
+standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", method="sfs", post_hoc=TRUE, ...)
 {
   
   # Exception handling
@@ -41,24 +37,24 @@ standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mult
  
   if (method=="likelihood")
   {
-    out <- standardize_likelihood(tra, model, form, error, sparse, ...)
+    out <- standardize_likelihood(tra, model, form, error, ...)
   }
   else if(method == "least_squares")
   {
-    out <- standardize_least_squares(tra, model, form, error, sparse, ...)
+    out <- standardize_least_squares(tra, model, form, error, ...)
   }
   else if(method == "sfs")
   {
-    #out <- standardize_sfs(tra, model, form, error, sparse, ...)
-    out <- standardize_tsfs(tra, model, form, error, sparse, ...)
+    #out <- standardize_sfs(tra, model, form, error, ...)
+    out <- standardize_tsfs(tra, model, form, error, ...)
   }
   else if(method == "rcs")
   {
-    out <- standardize_rcs(tra, model, form, error, sparse, ...)
+    out <- standardize_rcs(tra, model, form, error, ...)
   }
   else if(method == "gam")
   {
-    out <- standardize_gam(tra, model, form, error, sparse, ...)
+    out <- standardize_gam(tra, model, form, error, ...)
   }
   
   # Check for 3 effect model
@@ -66,7 +62,7 @@ standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mult
   {
     if (post_hoc)
     {
-      out$effects <- post_hoc_intercession(out$effects, out$tra, sparse, form)
+      out$effects <- post_hoc_intercession(out$effects, out$tra, form)
       warning("Three effect model selected. Post-hoc selection was used to stabilize parameter estimates.")
     } else {
       warning("Three effect model selected. Parameter estimates are wildly unreliable. Consider using post-hoc selection.")
@@ -80,65 +76,45 @@ standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mult
 # Estimating and removing effects ####
 
 # Naive estimate of a single effect (analagous to constructing regional curve or standardized chronology)
-est_effect <- function (tra, factor.dim, mean_type="arithmetic", sparse=TRUE)
+est_effect <- function (tra, factor.dim, mean_type="arithmetic")
 {  
-  if(sparse)
+  id <- factor.dim + 1
+  
+  estimate_effect <- function(id_i)
   {
-    id <- factor.dim + 1
-    
-    estimate_effect <- function(id_i)
-    {
-      data <- tra[tra[[id]]==id_i, "G"]
-      if (mean_type=="geometric"){
-        est_effect <- geomMean(data) 
-      } else {
-        est_effect <- mean(data, na.rm=TRUE)
-      }
-      return(est_effect)
-    }
-    
-    est_effect <- sapply(levels(tra[[id]]), estimate_effect)
-    
-  }
-  else
-  {
+    data <- tra[tra[[id]]==id_i, "G"]
     if (mean_type=="geometric"){
-      est_effect <- apply(tra, factor.dim, geomMean) 
+      est_effect <- geomMean(data) 
     } else {
-      est_effect <- apply(tra, factor.dim, mean, na.rm=TRUE)
+      est_effect <- mean(data, na.rm=TRUE)
     }
+    return(est_effect)
   }
   
+  est_effect <- sapply(levels(tra[[id]]), estimate_effect)
+    
   return (est_effect)
 }
 
 # Remove an effect from a tree ring array
-remove_effect <- function (tra, effect, factor.dim, form="multiplicative", sparse=TRUE)
+remove_effect <- function (tra, effect, factor.dim, form="multiplicative")
 {
-  if(sparse)
+  
+  id <- factor.dim + 1
+      
+  removed_tra <- tra
+  
+  for (effect_id in names(effect))
   {
-    id <- factor.dim + 1
-        
-    removed_tra <- tra
-    
-    for (effect_id in names(effect))
+    relevant_rows <- tra[[id]]==effect_id
+    if (form=="additive")
     {
-      relevant_rows <- tra[[id]]==effect_id
-      if (form=="additive")
-      {
-        removed_tra[relevant_rows,"G"] <- removed_tra[relevant_rows,"G"] - effect[effect_id]
-      }
-      else
-      {
-        removed_tra[relevant_rows,"G"] <- removed_tra[relevant_rows,"G"] / effect[effect_id]
-      }
+      removed_tra[relevant_rows,"G"] <- removed_tra[relevant_rows,"G"] - effect[effect_id]
     }
-  }
-  else
-  {
-    FUN <- ifelse(form =="additive","-", "/")
-    
-    removed_tra <- sweep(tra, factor.dim, effect, FUN)
+    else
+    {
+      removed_tra[relevant_rows,"G"] <- removed_tra[relevant_rows,"G"] / effect[effect_id]
+    }
   }
   
   return (removed_tra)
@@ -146,7 +122,7 @@ remove_effect <- function (tra, effect, factor.dim, form="multiplicative", spars
 }
 
 # Add dummy effect vectors if some are missing
-pad_effects <- function(effects, tra, form="multiplicative", sparse=TRUE)
+pad_effects <- function(effects, tra, form="multiplicative")
 {
   # Set the value to fill dummy coefficients with
   if (form=="multiplicative"){
@@ -158,62 +134,33 @@ pad_effects <- function(effects, tra, form="multiplicative", sparse=TRUE)
   # Initialize dummy effects lists
   new_effects <- list(I=NA, T=NA, A=NA)
   
-  if(sparse)
-  {
-    # Fill empty values  
-    for(i in c("I", "T", "A")){
+  # Fill empty values  
+  for(i in c("I", "T", "A")){
+    
+    j <- c(I="i", T="t", A="a")[i]
+    
+    if (length(effects[[i]] > 0)){
+      new_effects[[i]] <-  effects[[i]]
       
-      j <- c(I="i", T="t", A="a")[i]
-      
-      if (length(effects[[i]] > 0)){
-        new_effects[[i]] <-  effects[[i]]
-        
-        # Fill in dummy levels
-        if(length(effects[[i]]) < nlevels(tra[[j]]))
-        {
-          missing_names <- levels(tra[[j]])[!(levels(tra[[j]]) %in% names(effects[[i]]))]
-          missing_effects <- rep(na.value, times=length(missing_names))
-          names (missing_effects) <- missing_names
-          new_effects[[i]] <- c(effects[[i]], missing_effects)
-        }
-        
-      } else {
-        tra_dim <- which(c("I", "T", "A")==i)
-        
-        new_effects[[i]] <- rep.int(na.value, nlevels(tra[[tra_dim + 1]]))
-        effect_names <- levels(tra[[tra_dim + 1]])
-        if(i=="T" | i=="A")
-        {
-          effect_names <- as.numeric(as.character(effect_names))
-        }
-        names(new_effects[[i]]) <- sort(effect_names)
+      # Fill in dummy levels
+      if(length(effects[[i]]) < nlevels(tra[[j]]))
+      {
+        missing_names <- levels(tra[[j]])[!(levels(tra[[j]]) %in% names(effects[[i]]))]
+        missing_effects <- rep(na.value, times=length(missing_names))
+        names (missing_effects) <- missing_names
+        new_effects[[i]] <- c(effects[[i]], missing_effects)
       }
-    }
-  }
-  else
-  {
-    # Fill empty values  
-    for(i in c("I", "T", "A")){
       
-      j <- c(I=1, T=2, A=3)[i]
+    } else {
+      tra_dim <- which(c("I", "T", "A")==i)
       
-      if (length(effects[[i]] > 0)){
-        new_effects[[i]] <-  effects[[i]]
-        
-        # Fill in dummy levels
-        if(length(effects[[i]]) < dim(tra)[j])
-        {
-          missing_names <- dimnames(tra)[[j]][!(dimnames(tra)[[j]] %in% names(effects[[i]]))]
-          missing_effects <- rep(na.value, times=length(missing_names))
-          names (missing_effects) <- missing_names
-          new_effects[[i]] <- c(effects[[i]], missing_effects)
-        }
-      } else {
-        tra_dim <- which(c("I", "T", "A")==i)
-        
-        new_effects[[i]] <- rep.int(na.value, dim(tra)[tra_dim])
-        names(new_effects[[i]]) <- dimnames(tra)[[tra_dim]]
+      new_effects[[i]] <- rep.int(na.value, nlevels(tra[[tra_dim + 1]]))
+      effect_names <- levels(tra[[tra_dim + 1]])
+      if(i=="T" | i=="A")
+      {
+        effect_names <- as.numeric(as.character(effect_names))
       }
+      names(new_effects[[i]]) <- sort(effect_names)
     }
   }
   
@@ -221,35 +168,20 @@ pad_effects <- function(effects, tra, form="multiplicative", sparse=TRUE)
 }
 
 # Correctly order effect vectors
-sort_effects <- function(effects, tra, sparse=TRUE)
+sort_effects <- function(effects, tra)
 {
-  if(sparse)
+  # Only ascending sorting as no "standard" order is retained
+  sorted_effects <- list()
+  
+  # Sort I
+  effect_names <- names(effects$I)
+  sorted_effects$I <- effects$I[sort(effect_names)]
+  
+  # Sort T and A
+  for (j in c("T", "A"))
   {
-    # Only ascending sorting as no "standard" order is retained
-    sorted_effects <- list()
-    
-    # Sort I
-    effect_names <- names(effects$I)
-    sorted_effects$I <- effects$I[sort(effect_names)]
-    
-    # Sort T and A
-    for (j in c("T", "A"))
-    {
-      effect_names <- as.numeric(names(effects[[j]]))
-      sorted_effects[[j]] <- effects[[j]][as.character(sort(effect_names))]
-    }
-  }
-  else
-  {
-    sorted_effects <- effects
-    
-    for (i in 1:3) 
-    {
-      correct_order <- dimnames(tra)[[i]]
-      
-      sorted_effects[[i]] <- effects[[i]][correct_order]
-      
-    }
+    effect_names <- as.numeric(names(effects[[j]]))
+    sorted_effects[[j]] <- effects[[j]][as.character(sort(effect_names))]
   }
   
   return(sorted_effects)
@@ -299,7 +231,7 @@ rescale_effects <- function (effects, form="multiplicative")
 # Model fit statistics ####
 
 # Compute all the relevant model fit statistics for fixed-effects standardization
-model_fit_tra <- function(effects, tra, model, form, error, sparse, method="sfs", k=NA)
+model_fit_tra <- function(effects, tra, model, form, error, method="sfs", k=NA)
 {
   
   fit <- list()
@@ -310,46 +242,34 @@ model_fit_tra <- function(effects, tra, model, form, error, sparse, method="sfs"
     # Predictions of the null model are the null value
     fit$predicted <- tra
     
-    if (sparse) 
+    if (form=="additive")
     {
-      if (form=="additive")
-      {
-        fit$predicted$G <- 0
-      } else
-      {
-        fit$predicted$G <- 1
-      }
-    } else 
+      fit$predicted$G <- 0
+    } else
     {
-      if (form=="additive")
-      {
-        fit$predicted[!is.na(fit$predicted)] <- 0
-      } else
-      {
-        fit$predicted[!is.na(fit$predicted)] <- 1
-      }
+      fit$predicted$G <- 1
     }
     
     # Residuals of the null model are the observed data
     fit$residuals <- tra
     
   } else {
-    fit$predicted <- predicted_tra(effects, tra, form, sparse)
-    fit$residuals <- residuals_tra (tra, fit$predicted, error, sparse)
+    fit$predicted <- predicted_tra(effects, tra, form)
+    fit$residuals <- residuals_tra (tra, fit$predicted, error)
   }
   
-  fit$n <- n_tra(tra, sparse)
+  fit$n <- n_tra(tra)
   if (method=="gam")
   {
     fit$k <- k
   } else{
-    fit$k <- k_tra(tra, model, sparse)
+    fit$k <- k_tra(tra, model)
   }
-  fit$sigma <- sigma_tra(fit$residuals, error, sparse)
+  fit$sigma <- sigma_tra(fit$residuals, error)
   
-  fit$tss <- tss_tra(tra, error, sparse)
-  fit$rss <- rss_tra(fit$residuals, error, sparse)
-  fit$llh <- llh_tra(fit$residuals, error, sparse)
+  fit$tss <- tss_tra(tra, error)
+  fit$rss <- rss_tra(fit$residuals, error)
+  fit$llh <- llh_tra(fit$residuals, error)
   
   fit$Rsq <- Rsq_tra(fit$rss, fit$tss)
   fit$adj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
@@ -362,10 +282,8 @@ model_fit_tra <- function(effects, tra, model, form, error, sparse, method="sfs"
 }
 
 # Predicted values
-predicted_tra <- function (effects, tra, form, sparse)
+predicted_tra <- function (effects, tra, form)
 {
-  if(sparse)
-  {
     predicted <- tra
     
     for (r in 1:nrow(predicted))
@@ -383,257 +301,128 @@ predicted_tra <- function (effects, tra, form, sparse)
         predicted[r, "G"] <- effects$I[i] * effects$T[t] * effects$A[a]
       }
     }
-    
-  }
-  else
-  {
-    predicted <- tra
-    
-    filled_cells <- which(!is.na(tra), arr.ind=TRUE)
-    
-    for (cell in 1:nrow(filled_cells))
-    {
-      i <- filled_cells[cell, 1]
-      t <- filled_cells[cell, 2]
-      a <- filled_cells[cell, 3]
-      
-      if (form=="additive")
-      {
-        predicted[i,t,a] <- effects$I[i] + effects$T[t] + effects$A[a]
-      }
-      else
-      {
-        predicted[i,t,a] <- effects$I[i] * effects$T[t] * effects$A[a]
-      }
-    }
-  }
-  
-  
+     
   return(predicted)
 }
 
 # Residuals
-residuals_tra <- function (tra, predicted, error, sparse)
+residuals_tra <- function (tra, predicted, error)
 {
-  if(sparse)
+  residuals <- tra
+  
+  if (error=="norm")
   {
-    residuals <- tra
-    
-    if (error=="norm")
-    {
-      residuals$G <- tra$G - predicted$G
-    }
-    else
-    {
-      residuals$G <- tra$G / predicted$G
-    }
+    residuals$G <- tra$G - predicted$G
   }
   else
   {
-    if (error=="norm")
-    {
-      residuals <- tra - predicted
-    }
-    else
-    {
-      residuals <- tra / predicted
-    }
+    residuals$G <- tra$G / predicted$G
   }
   
   return (residuals)
 }
 
 # Number of data points in the model
-n_tra <- function (tra, sparse)
+n_tra <- function (tra)
 {
-  if(sparse)
-  {
-    n <- nrow(tra)
-  }
-  else
-  {
-    n <- sum(!is.na(tra))
-  }
+
+  n <- nrow(tra)
   
   return(n)
 }
 
 # Number of parameters estimated (k)
-k_tra <- function (tra, model, sparse)
+k_tra <- function (tra, model)
 {
-  if(sparse)
+ 
+  # One parameter automatically for estimate of error
+  k <- 1
+  
+  # One parameter is estimated for each index of the effect vectors
+  if (model$I)
   {
-    # One parameter automatically for estimate of error
-    k <- 1
-    
-    # One parameter is estimated for each index of the effect vectors
-    if (model$I)
-    {
-      k <- k + nlevels(tra$i)
-    }
-    if (model$T)
-    {
-      k <- k + nlevels(tra$t)
-    }
-    if (model$A)
-    {
-      k <- k + nlevels(tra$a)
-    }
-    
-    # Information about some parameters is lost due to rescaling (dummy variable trap)
-    num_effects <- sum(unlist(model))
-    
-    k <- ifelse (num_effects > 0, k - (num_effects-1), 0)
+    k <- k + nlevels(tra$i)
   }
-  else
+  if (model$T)
   {
-    # One parameter automatically for 
-    k <- 1
-    
-    # One parameter is estimated for each index of the effect vectors
-    if (model$I)
-    {
-      k <- k + dim(tra)[1]
-    }
-    if (model$T)
-    {
-      k <- k + dim(tra)[2]
-    }
-    if (model$A)
-    {
-      k <- k + dim(tra)[3]
-    }
-    
-    # Information about some parameters is lost due to rescaling (dummy variable trap)
-    num_effects <- sum(unlist(model))
-    
-    k <- ifelse (num_effects > 0, k - (num_effects-1), 0)
+    k <- k + nlevels(tra$t)
   }
+  if (model$A)
+  {
+    k <- k + nlevels(tra$a)
+  }
+  
+  # Information about some parameters is lost due to rescaling (dummy variable trap)
+  num_effects <- sum(unlist(model))
+  
+  k <- ifelse (num_effects > 0, k - (num_effects-1), 0)
+  
   
   return(k)
 }
 
 # Calculate sigma, the level of dispersal in the noise PDF as the RMSE (the standard deviation of the residuals)
-sigma_tra <- function (residuals, error, sparse)
+sigma_tra <- function (residuals, error)
 {
-  if(sparse)
+ 
+  val <- residuals$G
+  if (error=="lnorm")
   {
-    val <- residuals$G
-    if (error=="lnorm")
-    {
-      val <- log(val)
-    }
-    
-    # sigma <- sqrt(mean(val^2))
-    sigma <- sd(val)
+    val <- log(val)
   }
-  else
-  {
-    val <- residuals[!is.na(residuals)]
-    if (error=="lnorm")
-    {
-      val <- log(val)
-    }
-    
-    # sigma <- sqrt(mean(val^2))
-    sigma <- sd(val)
-  }
+  
+  # sigma <- sqrt(mean(val^2))
+  sigma <- sd(val)
   
   return(sigma)
 }
 
 # Total sum of squares
-tss_tra <- function (tra, error, sparse)
+tss_tra <- function (tra, error)
 {
-  if(sparse)
+  val <- tra$G
+  if (error=="lnorm")
   {
-    val <- tra$G
-    if (error=="lnorm")
-    {
-      val <- log(val)
-    }
-    
-    mean_val <- mean(val)
-    tss <- sum((val-mean_val)^2)
+    val <- log(val)
   }
-  else
-  {
-    val <- tra[!is.na(tra)]
-    if (error=="lnorm")
-    {
-      val <- log(val)
-    }
-    
-    mean_val <- mean(val)
-    tss <- sum((val-mean_val)^2)
-  }
+  
+  mean_val <- mean(val)
+  tss <- sum((val-mean_val)^2)
   
   return(tss)
 }
 
 # Residual sum of squares
-rss_tra <- function (residuals, error, sparse)
+rss_tra <- function (residuals, error)
 {
-  if(sparse)
+  val <- residuals$G
+  if (error=="lnorm")
   {
-    val <- residuals$G
-    if (error=="lnorm")
-    {
-      val <- log(val)
-    }
-    
-    mean_val <- mean(val)
-    rss <-sum((val-mean_val)^2)
-  }
-  else
-  {
-    val <- residuals[!is.na(residuals)]
-    if (error=="lnorm")
-    {
-      val <- log(val)
-    }
-    
-    mean_val <- mean(val)
-    rss <- sum((val-mean_val)^2)
+    val <- log(val)
   }
   
+  mean_val <- mean(val)
+  rss <-sum((val-mean_val)^2)
+    
   return(rss)
 }
 
 # Log-likelihood
-llh_tra <- function (residuals, error, sparse)
+llh_tra <- function (residuals, error)
 {
-  if(sparse)
+ 
+  sigma <- sigma_tra(residuals, error)
+  
+  val <- residuals$G
+  
+  # Likelihood is proportional to the probability of observing the data, given the parameters
+  if(error=="norm")
   {
-    sigma <- sigma_tra(residuals, error, sparse)
-    
-    val <- residuals$G
-    
-    # Likelihood is proportional to the probability of observing the data, given the parameters
-    if(error=="norm")
-    {
-      llh <- sum(dnorm(val, sd=sigma, log=TRUE))
-    }
-    else
-    {
-      llh <- sum(dlnorm(val, sd=sigma, log=TRUE))
-    }
+    llh <- sum(dnorm(val, sd=sigma, log=TRUE))
   }
   else
   {
-    sigma <- sigma_tra(residuals, error, sparse)
-    
-    val <- residuals[!is.na(residuals)]
-    
-    # Likelihood is proportional to the probability of observing the data, given the parameters
-    if(error=="norm")
-    {
-      llh <- sum(dnorm(val, sd=sigma, log=TRUE))
-    }
-    else
-    {
-      llh <- sum(dlnorm(val, sd=sigma, log=TRUE))
-    }
+    llh <- sum(dlnorm(val, sd=sigma, log=TRUE))
   }
   
   return(llh)

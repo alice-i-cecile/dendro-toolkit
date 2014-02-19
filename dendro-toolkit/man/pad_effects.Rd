@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-pad_effects(effects, tra, form = "multiplicative", sparse = TRUE)
+pad_effects(effects, tra, form = "multiplicative")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,9 +20,6 @@ pad_effects(effects, tra, form = "multiplicative", sparse = TRUE)
 }
   \item{form}{
 %%     ~~Describe \code{form} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -56,7 +53,7 @@ pad_effects(effects, tra, form = "multiplicative", sparse = TRUE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (effects, tra, form = "multiplicative", sparse = TRUE) 
+function (effects, tra, form = "multiplicative") 
 {
     if (form == "multiplicative") {
         na.value <- 1
@@ -65,49 +62,27 @@ function (effects, tra, form = "multiplicative", sparse = TRUE)
         na.value <- 0
     }
     new_effects <- list(I = NA, T = NA, A = NA)
-    if (sparse) {
-        for (i in c("I", "T", "A")) {
-            j <- c(I = "i", T = "t", A = "a")[i]
-            if (length(effects[[i]] > 0)) {
-                new_effects[[i]] <- effects[[i]]
-                if (length(effects[[i]]) < nlevels(tra[[j]])) {
-                  missing_names <- levels(tra[[j]])[!(levels(tra[[j]]) \%in\% 
-                    names(effects[[i]]))]
-                  missing_effects <- rep(na.value, times = length(missing_names))
-                  names(missing_effects) <- missing_names
-                  new_effects[[i]] <- c(effects[[i]], missing_effects)
-                }
-            }
-            else {
-                tra_dim <- which(c("I", "T", "A") == i)
-                new_effects[[i]] <- rep.int(na.value, nlevels(tra[[tra_dim + 
-                  1]]))
-                effect_names <- levels(tra[[tra_dim + 1]])
-                if (i == "T" | i == "A") {
-                  effect_names <- as.numeric(as.character(effect_names))
-                }
-                names(new_effects[[i]]) <- sort(effect_names)
+    for (i in c("I", "T", "A")) {
+        j <- c(I = "i", T = "t", A = "a")[i]
+        if (length(effects[[i]] > 0)) {
+            new_effects[[i]] <- effects[[i]]
+            if (length(effects[[i]]) < nlevels(tra[[j]])) {
+                missing_names <- levels(tra[[j]])[!(levels(tra[[j]]) \%in\% 
+                  names(effects[[i]]))]
+                missing_effects <- rep(na.value, times = length(missing_names))
+                names(missing_effects) <- missing_names
+                new_effects[[i]] <- c(effects[[i]], missing_effects)
             }
         }
-    }
-    else {
-        for (i in c("I", "T", "A")) {
-            j <- c(I = 1, T = 2, A = 3)[i]
-            if (length(effects[[i]] > 0)) {
-                new_effects[[i]] <- effects[[i]]
-                if (length(effects[[i]]) < dim(tra)[j]) {
-                  missing_names <- dimnames(tra)[[j]][!(dimnames(tra)[[j]] \%in\% 
-                    names(effects[[i]]))]
-                  missing_effects <- rep(na.value, times = length(missing_names))
-                  names(missing_effects) <- missing_names
-                  new_effects[[i]] <- c(effects[[i]], missing_effects)
-                }
+        else {
+            tra_dim <- which(c("I", "T", "A") == i)
+            new_effects[[i]] <- rep.int(na.value, nlevels(tra[[tra_dim + 
+                1]]))
+            effect_names <- levels(tra[[tra_dim + 1]])
+            if (i == "T" | i == "A") {
+                effect_names <- as.numeric(as.character(effect_names))
             }
-            else {
-                tra_dim <- which(c("I", "T", "A") == i)
-                new_effects[[i]] <- rep.int(na.value, dim(tra)[tra_dim])
-                names(new_effects[[i]]) <- dimnames(tra)[[tra_dim]]
-            }
+            names(new_effects[[i]]) <- sort(effect_names)
         }
     }
     return(new_effects)

@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-tss_tra(tra, error, sparse)
+tss_tra(tra, error)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ tss_tra(tra, error, sparse)
 }
   \item{error}{
 %%     ~~Describe \code{error} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,24 +50,14 @@ tss_tra(tra, error, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, error, sparse) 
+function (tra, error) 
 {
-    if (sparse) {
-        val <- tra$G
-        if (error == "lnorm") {
-            val <- log(val)
-        }
-        mean_val <- mean(val)
-        tss <- sum((val - mean_val)^2)
+    val <- tra$G
+    if (error == "lnorm") {
+        val <- log(val)
     }
-    else {
-        val <- tra[!is.na(tra)]
-        if (error == "lnorm") {
-            val <- log(val)
-        }
-        mean_val <- mean(val)
-        tss <- sum((val - mean_val)^2)
-    }
+    mean_val <- mean(val)
+    tss <- sum((val - mean_val)^2)
     return(tss)
   }
 }
