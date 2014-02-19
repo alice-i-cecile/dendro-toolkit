@@ -4,15 +4,15 @@ demonic_ritual <- function(effects, tra=TRUE){
   birth_index <- sapply(birth_years, get_birth_index, tra=tra)
   k <- -birth_index
   
- years <- sort(as.numeric(levels(tra$t)))
+ years <- sort(as.numeric(levels(tra$Time)))
   
-  year_index <- match(names(effects$T), as.character(years))
-  names(year_index) <- names(effects$T)
+  year_index <- match(names(effects$Time), as.character(years))
+  names(year_index) <- names(effects$Time)
   
-  ages <- sort(as.numeric(levels(tra$a)))
+  ages <- sort(as.numeric(levels(tra$Age)))
   
-  age_index <- match(names(effects$A), as.character(ages))
-  names(age_index) <- names(effects$A)
+  age_index <- match(names(effects$Age), as.character(ages))
+  names(age_index) <- names(effects$Age)
   
   k <- k[!is.na(k)]
   year_index <- year_index[!is.na(year_index)]
@@ -38,13 +38,13 @@ add_demons <- function (m=1, effects, tra=TRUE, form="multiplicative"){
   
   
   # I = I +m*k
-  corrupted_effects$I <- corrupted_effects$I + m*ridge_ids$I
+  corrupted_effects$Timeree <- corrupted_effects$Timeree + m*ridge_ids$Timeree
   
   # T = T + m*C
-  corrupted_effects$T <- corrupted_effects$T + m*ridge_ids$T
+  corrupted_effects$Time <- corrupted_effects$Time + m*ridge_ids$Time
   
   # A = A - m*R
-  corrupted_effects$A <- corrupted_effects$A - m*ridge_ids$A
+  corrupted_effects$Age <- corrupted_effects$Age - m*ridge_ids$Age
   
   if(form=="multiplicative")
   {
@@ -68,13 +68,13 @@ estimate_demons <- function (corrupted_effects, tra=TRUE, form="multiplicative")
   # Assuming normal random variation around the demonic line
   demonic_llh <- function (purified_effects)
   {
-    sd_I <- sd(purified_effects$I)
-    sd_T <- sd(purified_effects$T)
-    sd_A <- sd(purified_effects$A)
+    sd_I <- sd(purified_effects$Timeree)
+    sd_T <- sd(purified_effects$Time)
+    sd_A <- sd(purified_effects$Age)
     
-    llh_I <- sum(dnorm(purified_effects$I, sd=sd_I, log=TRUE))
-    llh_T <- sum(dnorm(purified_effects$T, sd=sd_T, log=TRUE))
-    llh_A <- sum(dnorm(purified_effects$A, mean=mean(purified_effects$A), sd=sd_A, log=TRUE))
+    llh_I <- sum(dnorm(purified_effects$Timeree, sd=sd_I, log=TRUE))
+    llh_T <- sum(dnorm(purified_effects$Time, sd=sd_T, log=TRUE))
+    llh_A <- sum(dnorm(purified_effects$Age, mean=mean(purified_effects$Age), sd=sd_A, log=TRUE))
     
     llh <- sum(llh_I, llh_T, llh_A)
     
@@ -105,13 +105,13 @@ remove_demons <- function (m=1, corrupted_effects, tra=TRUE, form="multiplicativ
   }
   
   # I = I + m*k
-  effects$I <- effects$I - m*ridge_ids$I
+  effects$Timeree <- effects$Timeree - m*ridge_ids$Timeree
   
   # T = T + m*C
-  effects$T <- effects$T - m*ridge_ids$T
+  effects$Time <- effects$Time - m*ridge_ids$Time
   
   # A = A - m*R
-  effects$A <- effects$A + m*ridge_ids$A
+  effects$Age <- effects$Age + m*ridge_ids$Age
   
   if(form=="multiplicative")
   {
@@ -142,7 +142,7 @@ post_hoc_intercession <- function(corrupted_effects, tra=TRUE, form="multiplicat
 # Testing ####
 #effects <- ta_2$effects
 #effects <- ita_2$effects
-#tra <- ta_2$tra
+#tra <- ta_2$Timera
 
 #corrupted_effects <- add_demons(m=1, effects, tra, form="additive")
 #purified <- remove_demons(m=1, corrupted_effects, tra, form="additive")
@@ -156,6 +156,6 @@ post_hoc_intercession <- function(corrupted_effects, tra=TRUE, form="multiplicat
 #purified <- post_hoc_intercession(corrupted_effects, tra, form="multiplicative")
 
 
-#plot(ta_2$effects$A)
-#plot(purified$T)
-#plot(purified$A)
+#plot(ta_2$effects$Age)
+#plot(purified$Time)
+#plot(purified$Age)

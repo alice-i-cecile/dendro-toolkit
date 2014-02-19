@@ -2,12 +2,12 @@
 # Fits models using maximum likelihood
 # Searches for solutions with various optimizing algorithms
 
-standardize_mle <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", method="CG" ...)
+standardize_mle <- function(tra, model=c("Time", "Age"), form="multiplicative", error="lnorm", method="CG" ...)
 {
   
   # Create storage for the estimated effects
   effects <-vector(mode="list", length=3)
-  names (effects) <- c("I","T","A")
+  names (effects) <- c("Tree","Time","Age")
   
   # Determine starting estimates for the effects
   for (i in names(tra)[2:ncol(tra)]){

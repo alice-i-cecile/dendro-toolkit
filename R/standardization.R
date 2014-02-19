@@ -5,7 +5,7 @@
 # error: is the data drawn from a normal additive PDF or a multiplicative log-normal PDF
 # optim: which algorithm should we use to standardize the data?
 
-standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", optim="sfs", post_hoc=TRUE, ...)
+standardize_tra <- function(tra, model=c("Age", "Time"), form="multiplicative", error="lnorm", optim="sfs", post_hoc=TRUE, ...)
 {
   
   # Exception handling ####
@@ -58,14 +58,14 @@ standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mult
   }
   
   # Check for 3 effect model
-  if (sum(unlist(model))==3)
+  if (("Tree" %in% model) & ("Time" %in% model) & ("Age" %in% model))
   {
     if (post_hoc)
     {
       effects <- post_hoc_intercession(out$effects, out$tra, form)
-      warning("Three effect model selected. Post-hoc effect selection was used to stabilize parameter estimates.")
+      warning("Tree-time-age model selected. Post-hoc effect selection was used to stabilize parameter estimates.")
     } else {
-      warning("Three effect model selected. Parameter estimates are wildly unreliable. Consider using post-hoc effect selection.")
+      warning("Tree-time-age model selected. Parameter estimates are wildly unreliable. Consider using post-hoc effect selection.")
     }
   }
   

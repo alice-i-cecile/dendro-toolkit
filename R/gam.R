@@ -1,7 +1,7 @@
 # GAM fixed effects standardization ####
 
 # Main gam function
-standardize_gam <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", sparse=TRUE, age_k=10, ...)
+standardize_gam <- function (tra, model=c("Time", "Age"), form="multiplicative", error="lnorm", sparse=TRUE, age_k=10, ...)
 {
   # Confirm that form and error match, otherwise GAMs can't be used
   if (
@@ -13,18 +13,8 @@ standardize_gam <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
     simpleError("Model form and error distribution are an unrealistic match. Generalized additive models cannot be used for this configuration.")
   }
   
-  # Convert the tree-ring array to the appropriate form (sparse/full)
-  if (sparse) 
-  {
-    if (!is.data.frame(tra))
-    {
-      tra <- sparse_tra(tra)
-    }
-  } else
-  {
-    # Regression uses table form data
-    simpleError("GAM standardization can only handle sparse tree-ring arrays.")
-  }
+  # Clean age info to ensure numeric form
+  tra$Agege <- as.numeric(as.character(tra$Agege))
   
   # Construct formula for regression
   growth_formula <- as.formula(make_gam_formula(model))
@@ -32,7 +22,7 @@ standardize_gam <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
   # max_k determines the maximum flexibility of the spline fitting the age effect
   # Increased max_k greatly increases computation time
   # Absolute maximum flexibility is:
-  # max_k <- nlevels(tra$a)
+  # max_k <- nlevels(tra$Age)
   
   print ("Model initialized.")
   print (growth_formula)
@@ -48,11 +38,11 @@ standardize_gam <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
   # Use GAM regression with a log-link
   if (form == "multiplicative")
   {
-    # Extremely slow, but more correct
-    #family <- Gamma(link="log")
+    # More correct. TODO
+    #family <- gaussian(link="log")
     # Log transformed response variable hack
     # Breaks gam-estimated AIC
-    tra$G <- log(tra$G)
+    tra$Growth <- log(tra$Growth)
     family <- gaussian(link="identity")
   }
   
@@ -69,7 +59,7 @@ standardize_gam <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
   if (form=="multiplicative")
   {
     effects <- lapply(effects, exp)
-    tra$G <- exp(tra$G)
+    tra$Growth <- exp(tra$Growth)
   }
   print ("Effects extracted.")
   
@@ -82,15 +72,15 @@ make_gam_formula <- function (model){
   dep.str <- "G"
   ind.str <- "0"
   
-  if(model$I){
-    ind.str <- paste(ind.str, "i", sep="+")
+  if("Tree" %in% model){
+    ind.str <- paste(ind.str, "Tree", sep="+")
   }
-  if(model$T){
-    ind.str <- paste(ind.str, "t", sep="+")
+  if("Time" %in% model){
+    ind.str <- paste(ind.str, "Time", sep="+")
   }
-  if(model$A){
+  if("Age" %in% model){
     # Change smoothing terms here
-    ind.str <- paste(ind.str, "s(as.numeric(as.character(a)), k=age_k, ...)", sep="+")
+    ind.str <- paste(ind.str, "s(Age), k=age_k, ...)", sep="+")
   }
   
   # Combine the two sides of the formula
@@ -107,15 +97,15 @@ extract_effects_gam <- function(growth_model, model, form, tra)
   raw_effects <- growth_model$coefficients
   
   effects <- list()
-  effects$I <- raw_effects[substr(names(raw_effects), 1, 1)=="i"]
-  effects$T <- raw_effects[substr(names(raw_effects), 1, 1)=="t"]
+  effects$Timeree <- raw_effects[substr(names(raw_effects), 1, 1)=="Tree"]
+  effects$Timeime <- raw_effects[substr(names(raw_effects), 1, 1)=="Time"]
   
-  names(effects$I) <- substr(names(effects$I), 2, length(names(effects$I)))
-  names(effects$T) <- substr(names(effects$T), 2, length(names(effects$T)))
+  names(effects$Timeree) <- substr(names(effects$Tree), 2, length(names(effects$Timeree)))
+  names(effects$Timeime) <- substr(names(effects$Time), 2, length(names(effects$Timeime)))
   
   # Find A by process of elimination
   # Generate predicted values
-  dummy_data <- data.frame(i=levels(tra$i)[2], t=levels(tra$t)[2], a=levels(tra$a))
+  dummy_data <- data.frame(Tree=levels(tra$Tree)[2], Time=levels(tra$Time)[2], Age=levels(tra$Agege))
   predicted_by_age <- predict(growth_model, dummy_data)
   
   # Remove the known effects of time and individuals
@@ -123,30 +113,30 @@ extract_effects_gam <- function(growth_model, model, form, tra)
   if (form=="additive")
   {
     base_line <- 0
-    if (model$I)
+    if ("Tree" %in% model)
     {
-      base_line <- base_line + effects$I[which(!is.na(pmatch(names(effects$I), levels(tra$i)[2])))]
+      base_line <- base_line + effects$Tree[which(!is.na(pmatch(names(effects$Tree), levels(tra$Tree)[2])))]
     }
-    if (model$T)
+    if ("Time" %in% model)
     {
-      base_line <- base_line + effects$T[which(!is.na(pmatch(names(effects$T), levels(tra$t)[2])))]
+      base_line <- base_line + effects$Time[which(!is.na(pmatch(names(effects$Time), levels(tra$t)[2])))]
     }
-    effects$A <- predicted_by_age - base_line
+    effects$Age <- predicted_by_age - base_line
   } else 
   {
     base_line <- 1
-    if (model$I)
+    if ("Tree" %in% model)
     {
-      base_line <- base_line * effects$I[which(!is.na(pmatch(names(effects$I), levels(tra$i)[2])))]
+      base_line <- base_line * effects$Tree[which(!is.na(pmatch(names(effects$Tree), levels(tra$Tree)[2])))]
     }
-    if (model$T)
+    if ("Time" %in% model)
     {
-      base_line <- base_line * effects$T[which(!is.na(pmatch(names(effects$T), levels(tra$t)[2])))]
+      base_line <- base_line * effects$Time[which(!is.na(pmatch(names(effects$Time), levels(tra$t)[2])))]
     }
-    effects$A <- predicted_by_age / base_line
+    effects$Age <- predicted_by_age / base_line
   }
   
-  names(effects$A) <- levels(tra$a)
+  names(effects$Age) <- levels(tra$Age)
   
   return(effects)
 }
