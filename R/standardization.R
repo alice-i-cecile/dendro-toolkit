@@ -45,8 +45,7 @@ standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mult
   }
   else if(method == "sfs")
   {
-    #out <- standardize_sfs(tra, model, form, error, ...)
-    out <- standardize_tsfs(tra, model, form, error, ...)
+    out <- standardize_sfs(tra, model, form, error, ...)
   }
   else if(method == "rcs")
   {
