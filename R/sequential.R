@@ -1,6 +1,7 @@
-# Regional curve standardization ####
+# Sequential standardization ####
+# Used in traditional regional curve standardization or flat detrending
 # effect_order: the order in which effects are sequentially estimated
-standardize_rcs <- function(tra, model=list(I=FALSE, A=TRUE, T=TRUE), form="multiplicative", error="lnorm")
+standardize_sequential <- function(tra, model=list(I=FALSE, A=TRUE, T=TRUE), form="multiplicative", error="lnorm")
 {
   
   # Select appropriate type of mean

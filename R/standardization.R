@@ -39,17 +39,18 @@ standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mult
   {
     effects <- standardize_likelihood(tra, model, form, error, ...)
   }
-  else if(optim == "least_squares")
+  # TODO
+  #else if(optim == "glm")
+  #{
+  #  effects <- standardize_glm(tra, model, form, error, ...)
+  #}
+  else if(optim == "alternate")
   {
-    effects <- standardize_least_squares(tra, model, form, error, ...)
-  }
-  else if(optim == "sfs")
-  {
-    effects <- standardize_sfs(tra, model, form, error, ...)
+    effects <- standardize_alternate(tra, model, form, error, ...)
   }
   else if(optim == "rcs")
   {
-    effects <- standardize_rcs(tra, model, form, error, ...)
+    effects <- standardize_sequential(tra, model, form, error, ...)
   }
   else if(optim == "gam")
   {

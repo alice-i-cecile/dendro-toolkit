@@ -1,7 +1,7 @@
-# Ssignal-free standardization ####
+# Alternate optimization ####
 # Cleans up signal-free regional curve standardization algorithm and allows expansion to N dimensions
 
-standardize_sfs <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", cor_threshold=0.999999)
+standardize_alternate <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", cor_threshold=0.999999)
 {
   
   # Select appropriate type of mean
