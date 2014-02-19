@@ -84,19 +84,5 @@ standardize_sfs <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
     
   }
   
-  # Make sure effects are in the right order
-  effects <- sort_effects(effects, tra)
-  
-  # Rescale the effects to standard form
-  effects <- rescale_effects(effects, form)
-  
-  # Compute model fit statistics
-  fit <- model_fit_tra (effects, tra, model, form, error)
-  
-  # Record model fitting settings
-  settings <- list(model=model, form=form, error=error, method="sfs")
-  
-  out <- list(effects=effects, tra=tra, fit=fit, settings=settings)
-  
-  return (out)
+  return (effects)
 }

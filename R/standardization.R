@@ -1,14 +1,14 @@
-# Wrapper for standardizing tree ring data ####
+# Wrapper for standardizing tree ring data
 # tra: the tree-ring array data structure containing the data to be analysed
 # model: which effects (individual, time, age) to include in the model?
 # form: are the effects added together or multiplied together
 # error: is the data drawn from a normal additive PDF or a multiplicative log-normal PDF
-# method: which algorithm should we use to standardize the data?
+# optim: which algorithm should we use to standardize the data?
 
-standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", method="sfs", post_hoc=TRUE, ...)
+standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", optim="sfs", post_hoc=TRUE, ...)
 {
   
-  # Exception handling
+  # Exception handling ####
   if (ifelse(is.data.frame(tra), sum(tra$G <= 0), sum(tra[tra<=0], na.rm=TRUE) > 0))
   {
     # Raise a warning if negative values found for multiplicative models
@@ -34,26 +34,26 @@ standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mult
     warning("Model form and error distribution are an unrealistic match. Be sure to check the model residuals. Model fitting problems may arise.")
   }
 
- 
-  if (method=="likelihood")
+  # Model fitting
+  if (optim=="likelihood")
   {
-    out <- standardize_likelihood(tra, model, form, error, ...)
+    effects <- standardize_likelihood(tra, model, form, error, ...)
   }
-  else if(method == "least_squares")
+  else if(optim == "least_squares")
   {
-    out <- standardize_least_squares(tra, model, form, error, ...)
+    effects <- standardize_least_squares(tra, model, form, error, ...)
   }
-  else if(method == "sfs")
+  else if(optim == "sfs")
   {
-    out <- standardize_sfs(tra, model, form, error, ...)
+    effects <- standardize_sfs(tra, model, form, error, ...)
   }
-  else if(method == "rcs")
+  else if(optim == "rcs")
   {
-    out <- standardize_rcs(tra, model, form, error, ...)
+    effects <- standardize_rcs(tra, model, form, error, ...)
   }
-  else if(method == "gam")
+  else if(optim == "gam")
   {
-    out <- standardize_gam(tra, model, form, error, ...)
+    effects <- standardize_gam(tra, model, form, error, ...)
   }
   
   # Check for 3 effect model
@@ -61,13 +61,30 @@ standardize_tra <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mult
   {
     if (post_hoc)
     {
-      out$effects <- post_hoc_intercession(out$effects, out$tra, form)
-      warning("Three effect model selected. Post-hoc selection was used to stabilize parameter estimates.")
+      effects <- post_hoc_intercession(out$effects, out$tra, form)
+      warning("Three effect model selected. Post-hoc effect selection was used to stabilize parameter estimates.")
     } else {
-      warning("Three effect model selected. Parameter estimates are wildly unreliable. Consider using post-hoc selection.")
+      warning("Three effect model selected. Parameter estimates are wildly unreliable. Consider using post-hoc effect selection.")
     }
   }
   
+  # Fill in dummy values for effects not estimated
+  effects <- pad_effects(effects, tra, form, sparse)
+  
+  # Make sure effects are in the right order
+  effects <- sort_effects(effects, tra, sparse)
+  
+  # Rescale the effects to standard form
+  effects <- rescale_effects(effects, form)
+  
+  # Compute model fit statistics
+  fit <- model_fit_tra (effects, tra, model, form, error)
+  
+  # Record model fitting settings
+  settings <- list(model=model, form=form, error=error, optim=optim
+                   
+  # Compile and output all relevant information               
+  out <- list(effects=effects, tra=tra, fit=fit, settings=settings)
   
   return (out)
 }

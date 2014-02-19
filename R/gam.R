@@ -73,28 +73,7 @@ standardize_gam <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
   }
   print ("Effects extracted.")
   
-  # Fill in dummy values for effects not estimated
-  effects <- pad_effects(effects, tra, form, sparse)
-  
-  # Make sure effects are in the right order
-  effects <- sort_effects(effects, tra, sparse)
-  
-  # Rescale the effects to standard form
-  effects <- rescale_effects(effects, form)
-  
-  # Compute model fit statistics
-  # k, the number of parameters fit, must be gathered from the model fitting function
-  # k is ~= the effective degrees of freedom + 1
-  k <- sum(growth_model$edf) + 1
-  fit <- model_fit_tra (effects, tra, model, form, error, sparse, method="gam", k=k)
-  print("Fit computed.")
-  
-  # Record model fitting settings
-  settings <- list(model=model, form=form, error=error, sparse=sparse, method="gam", ...) #max_k=max_k, ...)
-  
-  out <- list(effects=effects, tra=tra, fit=fit, settings=settings)
-  
-  return (out)
+  return (effects)
   
 }
 

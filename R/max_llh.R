@@ -2,6 +2,47 @@
 # Fits models using maximum likelihood
 # Searches for solutions with simulated annealing
 
+standardize_mle <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", ...)
+{
+  
+  # Determine starting estimates for the effects
+  dummy_effects <- pad_effects(list(), tra, form)
+  flat_effects0 <- flatten_effects(dummy_effects, model)
+  
+  # Likelihood function, optimize this!
+  fes_likelihood <- function(flat_effects)
+  {
+    # Unflatten effects
+    effects <- unflatten_effects(flat_effects)
+    
+    # Pad the effects
+    effects <- pad_effects(effects, tra, form)
+    
+    # Find the predicted values
+    predicted <- predicted_tra(effects, tra, form)
+    
+    # Find the residuals
+    residuals <- residuals_tra(tra, predicted, error)
+    
+    # Find the likelihood
+    llh <- llh_tra(residuals, error)
+    
+    # Return the negative likelihood (optim is a minimizer)
+    return(-llh)
+  }
+  
+  # Optimize the model
+  mle_solution <- optim(flat_effects0, fes_likelihood, ...)
+  
+  # Report the optimizer's output
+  print(mle_solution[2:5])
+  
+  # Extract the effects
+  effects <- unflatten_effects(mle_solution$par)
+  
+  return(effects)
+}
+
 # Flattening effects to a vector for use with optim()
 flatten_effects <- function(effects, model)
 {
@@ -42,60 +83,3 @@ unflatten_effects <- function (flat_effects)
   return(effects)
 }
 
-standardize_mle <- function(tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="multiplicative", error="lnorm", ...)
-{
-  
-  # Determine starting estimates for the effects
-  dummy_effects <- pad_effects(list(), tra, form)
-  flat_effects0 <- flatten_effects(dummy_effects, model)
-  
-  # Likelihood function, optimize this!
-  fes_likelihood <- function(flat_effects)
-  {
-    # Unflatten effects
-    effects <- unflatten_effects(flat_effects)
-    
-    # Pad the effects
-    effects <- pad_effects(effects, tra, form)
-    
-    # Find the predicted values
-    predicted <- predicted_tra(effects, tra, form)
-    
-    # Find the residuals
-    residuals <- residuals_tra(tra, predicted, error)
-    
-    # Find the likelihood
-    llh <- llh_tra(residuals, error)
-    
-    # Return the negative likelihood (optim is a minimizer)
-    return(-llh)
-  }
-  
-  # Optimize the model
-  mle_solution <- optim(flat_effects0, fes_likelihood, ...)
-  
-  # Report the optimizer's output
-  print(mle_solution[2:5])
-  
-  # Extract the effects
-  effects <- unflatten_effects(mle_solution$par)
-  
-  # Fill in dummy values for effects not estimated
-  effects <- pad_effects(effects, tra, form)
-  
-  # Make sure effects are in the right order
-  effects <- sort_effects(effects, tra)
-  
-  # Rescale the effects to standard form
-  effects <- rescale_effects(effects, form)
-  
-  # Compute model fit statistics
-  fit <- model_fit_tra (effects, tra, model, form, error)
-  
-  # Record model fitting settings
-  settings <- list(model=model, form=form, error=error, method="likelihood", ...)
-  
-  out <- list(effects=effects, tra=tra, fit=fit, settings=settings)
-  
-  return(out)
-}

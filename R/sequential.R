@@ -28,22 +28,5 @@ standardize_rcs <- function(tra, model=list(I=FALSE, A=TRUE, T=TRUE), form="mult
     working_tra <- remove_effect(working_tra, effects[[id]], effect, form)
   }
   
-  # Fill in dummy values for effects not estimated
-  effects <- pad_effects(effects, tra, form, sparse)
-  
-  # Make sure effects are in the right order
-  effects <- sort_effects(effects, tra, sparse)
-  
-  # Rescale the effects to standard form
-  effects <- rescale_effects(effects, form)
-  
-  # Compute model fit statistics
-  fit <- model_fit_tra (effects, tra, model, form, error)
-  
-  # Record model fitting settings
-  settings <- list(model=model, form=form, error=error, method="rcs")
-  
-  out <- list(effects=effects, tra=tra, fit=fit, settings=settings)
-  
-  return (out)   
+  return (effects)   
 }
