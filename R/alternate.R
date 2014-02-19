@@ -16,8 +16,8 @@ standardize_sfs <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
   names (effects) <- c("I","T","A")
   
   # Dummy starting effects
-  for (i in 1:3){
-    dim_i <- nlevels(tra[[i+1]])
+  for (i in names(tra)[2:ncol(tra)]){
+    dim_i <- nlevels(tra[[i]])
     
     if (form=="additive")
     {
@@ -27,15 +27,11 @@ standardize_sfs <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
       effects[[i]] <-  rep.int(1,  dim_i)
     }
 
-    names(effects[[i]]) <- levels(tra[[i+1]])
+    names(effects[[i]]) <- levels(tra[[i]])
   }
   
   # Determine effect order from order in which I, T, A is listed
   inc_effects <- names(model[unlist(model)==TRUE])
-  name_dim_dict <- c(I="I", T="T", A="A")
-  effect_order <- match(inc_effects, name_dim_dict)
-  
-  # Loop controls
   
   # Don't attempt to fit null models
   if (length(inc_effects)==0)
@@ -45,6 +41,8 @@ standardize_sfs <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
   {
     converged <- FALSE
   }
+  
+  # Loop controls
   iteration <- 0
   working_tra <- tra
   
@@ -55,21 +53,21 @@ standardize_sfs <- function (tra, model=list(I=FALSE, T=TRUE, A=TRUE), form="mul
     iteration <- iteration +1
     print (paste("Iteration", iteration))
     
-    for (j in effect_order){
+    for (id in inc_effects){
       
       # Estimate the effects across each dimension
-      est_j <- est_effect(working_tra, j, mean_type)
+      est_j <- est_effect(working_tra, id, mean_type)
       
       # Remove them from the signal-free data
-      working_tra <- remove_effect (working_tra, est_j, j, form)
+      working_tra <- remove_effect (working_tra, est_j, id, form)
       
       # Combine them with previously determined effects for that dimension
       if (form == "additive")
       {
-        effects[[j]] <- effects[[j]] + est_j
+        effects[[id]] <- effects[[id]] + est_j
       } else
       {
-        effects[[j]] <- effects[[j]] * est_j
+        effects[[id]] <- effects[[id]] * est_j
       }
     }
     

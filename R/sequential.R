@@ -12,8 +12,6 @@ standardize_rcs <- function(tra, model=list(I=FALSE, A=TRUE, T=TRUE), form="mult
   
   # Determine effect order from order in which I, T, A is listed
   inc_effects <- names(model[unlist(model)==TRUE])
-  name_dim_dict <- c(I="I", T="T", A="A")
-  effect_order <- match(inc_effects, name_dim_dict)
   
   # Make a dummy list of effects
   effects <- list(I=NULL, T=NULL, A=NULL)
@@ -22,12 +20,12 @@ standardize_rcs <- function(tra, model=list(I=FALSE, A=TRUE, T=TRUE), form="mult
   working_tra <- tra
   
   # Estimate the effects one at a time
-  for (effect in effect_order){
+  for (id in inc_effects){
     # Estimate an effect    
-    effects[[effect]] <- est_effect(working_tra, effect, mean_type)
+    effects[[id]] <- est_effect(working_tra, id, mean_type)
     
     # Remove the effect
-    working_tra <- remove_effect(working_tra, effects[[effect]], effect, form)
+    working_tra <- remove_effect(working_tra, effects[[id]], effect, form)
   }
   
   # Fill in dummy values for effects not estimated

@@ -1,10 +1,10 @@
 # Estimating and removing effects ####
 
 # Naive estimate of a single effect (analagous to constructing regional curve or standardized chronology)
-est_effect <- function (tra, factor.dim, mean_type="arithmetic")
+est_effect <- function (tra, id, mean_type="arithmetic")
 {  
-  id <- factor.dim + 1
-  
+
+  # Estimate effect using averages (crude method of moments)
   estimate_effect <- function(id_i)
   {
     data <- tra[tra[[id]]==id_i, "G"]
@@ -24,9 +24,7 @@ est_effect <- function (tra, factor.dim, mean_type="arithmetic")
 # Remove an effect from a tree ring array
 remove_effect <- function (tra, effect, factor.dim, form="multiplicative")
 {
-  
-  id <- factor.dim + 1
-  
+    
   removed_tra <- tra
   
   for (effect_id in names(effect))
