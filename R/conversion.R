@@ -1,4 +1,4 @@
-# RWL to TRA and back again ####
+# utility ####
 
 # Get endpoints of a rwl series
 getEndpoints <- function (series, side="start"){
@@ -12,170 +12,11 @@ getEndpoints <- function (series, side="start"){
   }      
 }
 
-# Convert a standard tree ring data frame (.rwl) into tree ring array form. Model is G(i, t, T) = Q*F*A
-rwl.to.tra <- function (rwl, birth_years=NULL){
-  
-  if (is.null(birth_years)){
-    # Determine birth for each tree
-    birth_years <- foreach(i=colnames(rwl)) %do% {getEndpoints(rwl[i], side="start")}
-    names (birth_years) <- names(rwl)
-    
-  }  else {
-    # If rwl file is too short, add empty rows to it
-    birth_limit <- min(sapply(birth_years, as.numeric))
-    rwl_limit <- min(sapply(rownames(rwl), as.numeric))
-    
-    if (birth_limit < rwl_limit){
-      num_missing <- rwl_limit-birth_limit
-      
-      empty_rows <- rbind(rwl[0,], matrix(NA, num_missing, ncol(rwl)))
-      
-      colnames(empty_rows) <- colnames(rwl)
-      rownames(empty_rows) <- birth_limit:(rwl_limit-1)
-      
-      rwl <- rbind(empty_rows, rwl)
-    }
-  }
-  
-  # Find the indices for each year
-  birth_index <- vector ()
-  
-  for (i in 1:length(birth_years)){
-    birth_index[i] <- which(rownames(rwl)==toString(birth_years[i]))
-  }
-  
-  names (birth_index) <- names (birth_years)
-  
-  # Compute dimension size for all elements
-  i.size <- ncol (rwl)
-  t.size <- nrow (rwl)
-  T.size <- t.size
-  
-  #   # Construct empty vectors of the appropriate length
-  #   Q.empty <- rep.int (NA, i.size)
-  #   F.empty <- rep.int (NA, t.size)
-  #   A.empty <- rep.int (NA, T.size)
-  #   
-  #   # Construct an empty tree ring array via tensor multiplication
-  #   tra <- Q.empty %o% F.empty %o% A.empty
-  
-  # Construct an array directly
-  tra <- array(NA, c(i.size, t.size, T.size), list(colnames(rwl), rownames (rwl), 1:T.size))
-  
-  # Input data 
-  for (tree in 1:ncol(rwl)){
-    birth <- birth_index[tree]
-    for (year in 1:nrow(rwl)){
-      
-      # Find age of ring data
-      age <- year - birth + 1
-      
-      
-      datum <- rwl [year, tree]
-      
-      # Only update filled values
-      if (!is.na(datum)){        
-        tra [tree,year,age] <- datum
-      }
-    }
-  }
-  
-  # Truncate empty rows
-  empty_tra <- is.na(tra)
-  
-  empty_Q <- apply(empty_tra, 1, all)
-  empty_F <- apply(empty_tra, 2, all)
-  empty_A <- apply(empty_tra, 3, all)
-  
-  tra <- tra[!empty_Q, !empty_F, !empty_A]
-  
-  return (tra)
-}
+# RWL to TRA ####
 
-# Convert a tree ring array back to a standard tree ring data frame
-tra.to.rwl <- function (tra) {
-  
-  # Get dimension sizes
-  i.size <- dim (tra)[1]
-  t.size <- dim (tra)[2]
-  
-  # Make an empty data frame
-  rwl <- as.data.frame(matrix (NA, t.size, i.size))
-  
-  colnames(rwl) <- dimnames(tra)[[1]]
-  rownames(rwl) <- dimnames(tra)[[2]]
-  
-  # Fill data
-  for (tree in 1:i.size){
-    
-    # Get lifespan to fill. Could be more general in style
-    filled <- !is.na(tra[tree, ,])
-    filledYears <- rownames(filled[rowSums(filled)>0,])
-    
-    # Extract data
-    data <- tra[tree,,]
-    data <- data[!is.na(data)]
-    
-    # Put data into appropriate position in data frame
-    rwl[filledYears, tree] <- data
-  }
-  
-  return (rwl)
-}
-
-# Handling sparse tree-ring arrays ####
-
-# Compress a (full) tree-ring array to its sparse form
-sparse_tra <- function(tra)
-{
-  full <- !is.na(tra)
-  values <- tra[full]
-  ind_pos <- which(full, arr.ind=T)
-  
-  i <- dimnames(full)[[1]][ind_pos[,1]]
-  t <- dimnames(full)[[2]][ind_pos[,2]]
-  a <- dimnames(full)[[3]][ind_pos[,3]]
-  
-  stra <- data.frame(G=values, i=i, t=t, a=a)
-  stra[2:4] <- lapply(stra[2:4], as.factor)
-  
-  return (stra)
-}
-
-
-# Uncompress a (sparse) tree-ring array to its full form
-unsparse_tra <- function(stra)
-{
-  # Sort levels of indexes to hopefully preserve temporal ordering
-  indices <- lapply(stra[2:ncol(stra)], levels)
-  indices[c("t", "a")] <- lapply(indices[c("t", "a")], as.numeric)
-  indices <- lapply(indices, sort)
-  indices[c("t", "a")] <- lapply(indices[c("t", "a")], as.character)
-  
-  # Generate an array of the appropriate size
-  tra <- array(data=NA, dim=sapply(indices, length), dimnames=indices)
-  
-  # Fill in the recorded data  
-  for (j in 1:nrow(stra))
-  {
-    stra_row <- stra[j,]
-    
-    i <- as.character(stra[j,"i"])
-    t <- as.character(stra[j,"t"])
-    a <- as.character(stra[j,"a"])
-    G <- stra[j,"G"]
-    
-    tra[i,t,a] <- G
-  }
-  
-  return(tra)
-  
-}
-
-# Go directly from a rwl to stra
+# Go directly from a rwl to tra
 # Avoid unnecessary memory bottlenecks
-# Increase chunk size as high as feasible for optimal performance
-rwl.to.stra <- function (rwl, birth_years=NULL)
+rwl_to_tra <- function (rwl, birth_years=NULL)
 {
   if (is.null(birth_years)){
     # Determine birth for each tree
@@ -233,24 +74,26 @@ rwl.to.stra <- function (rwl, birth_years=NULL)
   }
   
   # Find the growth data at each filled cell and record its position
-  raw_stra <- mapply(add_growth_data, year=filled[,1], tree=filled[,2], SIMPLIFY=FALSE)
-  stra <- data.frame(matrix(unlist(raw_stra),ncol=4, byrow=TRUE))
-  names(stra) <- c("G", "i", "t", "a")
-  stra[[1]] <- as.numeric(stra[[1]])
+  raw_tra <- mapply(add_growth_data, year=filled[,1], tree=filled[,2], SIMPLIFY=FALSE)
   
-  return(stra)
+  # Final formatting
+  tra <- data.frame(matrix(unlist(raw_tra),ncol=4, byrow=TRUE))
+  names(tra) <- c("Growth", "Tree", "Year", "Age")
+  tra$Growth <- as.numeric(tra$Growth)
+  
+  return(tra)
   
 }
 
-# Converting from sparse tree ring arrays back to rwl tables ####
+# TRA to RWL ####
 
 # Often loses information about age, sometimes metadata
-stra_to_rwl <- function(stra, data_column="Growth")
+tra_to_rwl <- function(tra, data_column="Growth")
 {
   # Create the base table
-  tree_names <- unique(stra$Tree)
+  tree_names <- unique(tra$Tree)
 
-  years <- unique(stra$Year)
+  years <- unique(tra$Year)
   years <- sort(as.numeric(as.character(year)))
   
   num_trees <- length(tree_names)
@@ -259,18 +102,18 @@ stra_to_rwl <- function(stra, data_column="Growth")
   rwl <- as.data.frame(matrix(data=NA, nrow=num_year, ncol=num_trees, dimnames=list(years, trees)))
   
   # Fill in data
-  for (i in 1:nrows(stra))
+  for (i in 1:nrows(tra))
   {
     
     # Extract year and tree coordinates
-    tree <- stra[i, "Tree"]
-    year <- stra[i, "Year"]
+    tree <- tra[i, "Tree"]
+    year <- tra[i, "Year"]
     
     tree_index <- which(names(rwl)==tree)
     year_index <- which(rownames(rwl)==year)
       
     # Convert growth data
-    rwl[year_index, tree_index] <- stra[i, data_column]
+    rwl[year_index, tree_index] <- tra[i, data_column]
   }
   
   return(rwl)
