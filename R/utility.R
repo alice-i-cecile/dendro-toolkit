@@ -9,20 +9,20 @@ geomMean <- function(x){
   return (out)
 }
 
-# Get sample size along a dimension ####
-sample_depth_tra <- function(tra, factor.dim=2){ #1 is tree, 2 is time, 3 is age
+# Get sample size for a characteristic ####
+sample_depth_tra <- function(tra, id="Time"){ #1 is tree, 2 is time, 3 is age
     
-  positions <- tra[[factor.dim+1]]
+  positions <- tra[[id]
   ids <- levels (positions)
   
   sample_depth <- sapply(ids, function(x){sum(positions==x)})
   
-  if(factor.dim==1)
-  {
-    ordering <- sort(names(sample_depth))
-  }  else
+  if(id=="Time" | id=="Age")
   {
     ordering <- sort(as.numeric(names(sample_depth)))
+  }  else
+  {
+    ordering <- sort(names(sample_depth))
   }
  
   sample_depth <- sample_depth[sapply(ordering, as.character)]
