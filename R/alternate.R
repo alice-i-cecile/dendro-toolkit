@@ -20,11 +20,11 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_
   }
   
   # Create storage for the estimated effects
-  effects <- vector(mode="list", length=3)
-  names (effects) <- c("Tree","Time","Age")
+  effects <- vector(mode="list", length=length(model))
+  names(effects) <- model
   
   # Dummy starting effects
-  for (i in names(tra)[2:ncol(tra)]){
+  for (i in model){
     dim_i <- nlevels(tra[[i]])
     
     if (form=="additive")

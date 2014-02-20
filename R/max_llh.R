@@ -6,14 +6,14 @@ standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG"
 {
   
   # Create storage for the estimated effects
-  effects <-vector(mode="list", length=3)
-  names (effects) <- c("Tree","Time","Age")
+  effects0 <- vector(mode="list", length=length(model))
+  names(effects) <- model
   
-  # Determine starting estimates for the effects
-  for (i in names(tra)[2:ncol(tra)]){
+  # Dummy starting effects
+  for (i in model){
     dim_i <- nlevels(tra[[i]])
     
-    if (link=="log")
+    if (form=="additive")
     {
       effects[[i]] <-  rep.int(0,  dim_i)
     } else

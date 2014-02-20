@@ -50,14 +50,11 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="sfs"
       effects <- post_hoc_intercession(out$effects, out$tra, link)
       warning("Tree-time-age model selected. Post-hoc effect selection was used to stabilize parameter estimates.")
     } else {
-      warning("Tree-time-age model selected. Parameter estimates are wildly unreliable. Consider using post-hoc effect selection.")
+      warning("Tree-time-age model selected. Parameter estimates will be unreliable. Consider using post-hoc effect selection.")
     }
   }
   
-  # Fill in dummy values for effects not estimated
-  effects <- pad_effects(effects, tra, link, sparse)
-  
-  # Make sure effects are in the right order
+  # Make sure elements of effects are in the right order
   effects <- sort_effects(effects, tra, sparse)
   
   # Rescale the effects to standard form

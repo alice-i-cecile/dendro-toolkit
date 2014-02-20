@@ -37,7 +37,7 @@ standardize_gam <- function (tra, model=c("Time", "Age"), link=="log", sparse=TR
   }
   
   # Estimate the growth model
-  growth_model <- gam (growth_formula, family=family, data=tra, ...)
+  growth_model <- gam(growth_formula, family=family, data=tra, ...)
   print ("Generalized additive model used to standardize data.")
   
   # Extract estimates of the effect

@@ -24,8 +24,9 @@ standardize_sequential <- function(tra, model=c("Age", "Time"), link="log")
   # Determine effect order from order in which I, T, A is listed
   inc_effects <- model
   
-  # Make a dummy list of effects
-  effects <- list("Tree"=NULL, "Time"=NULL, "Age"=NULL)
+  # Create storage for the estimated effects
+  effects <- vector(mode="list", length=length(model))
+  names(effects) <- model
   
   # Make a dummy tree-ring array
   working_tra <- tra

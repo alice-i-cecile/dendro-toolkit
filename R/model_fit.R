@@ -38,12 +38,12 @@ model_fit_tra <- function(effects, tra, model, link method="alternate", k=NA)
   }
   fit$sigma <- sigma_tra(fit$residuals, link)
   
-  fit$Timess <- tss_tra(tra, link)
+  fit$tss <- tss_tra(tra, link)
   fit$rss <- rss_tra(fit$residuals, link)
   fit$llh <- llh_tra(fit$residuals, link)
   
-  fit$Rsq <- Rsq_tra(fit$rss, fit$Timess)
-  fit$Agedj.Rsq <- adj.Rsq_tra(fit$rss, fit$Timess, fit$n, fit$k)
+  fit$Rsq <- Rsq_tra(fit$rss, fit$tss)
+  fit$Agedj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
   
   fit$AgeIC <- AIC_tra(fit$llh, fit$k)
   fit$AgeICc <- AICc_tra(fit$llh, fit$k, fit$n)
@@ -55,22 +55,30 @@ model_fit_tra <- function(effects, tra, model, link method="alternate", k=NA)
 # Predicted values
 predicted_tra <- function (effects, tra, link)
 {
-  predicted <- tra
   
+  # Set starting values to null value
+  predicted <- tra
+  predicted$Growth <- 0
+  
+  # Transform growth data according to link function
+  if(link=="log"){
+    tra$Growth <- log(tra$Growth)
+  }
+  
+  # Add effects on 1 at a time
   for (r in 1:nrow(predicted))
   {
-    i <- as.character(tra[r, "Tree"])
-    t <- as.character(tra[r, "Time"])
-    a <- as.character(tra[r, "Age"])
-    
-    if (link=="identity")
+    for (e in model)
     {
-      predicted[r, "Growth"] <- effects$Timeree[i] + effects$Time[t] + effects$Age[a]
+      i <- as.character(tra[r, e])
+      
+      predicted[r, "Growth"] <- predicted[r, "Growth"] + effects[[e]][i]
     }
-    else
-    {
-      predicted[r, "Growth"] <- effects$Timeree[i] * effects$Time[t] * effects$Age[a]
-    }
+  }
+  
+  # Untransform growth data
+  if(link=="log"){
+    predicted$Growth <- exp(predicted$Growth)
   }
   
   return(predicted)
@@ -110,15 +118,15 @@ k_tra <- function (tra, model)
   k <- 1
   
   # One parameter is estimated for each index of the effect vectors
-  if (model$Timeree)
+  if ("Tree" %in% model)
   {
-    k <- k + nlevels(tra$Timeree)
+    k <- k + nlevels(tra$Tree)
   }
-  if (model$Time)
+  if ("Time" %in% model)
   {
     k <- k + nlevels(tra$Time)
   }
-  if (model$Age)
+  if ("Age" %in% model)
   {
     k <- k + nlevels(tra$Age)
   }

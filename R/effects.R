@@ -44,67 +44,26 @@ remove_effect <- function (tra, effect, id, link="log")
   
 }
 
-# Add dummy effect vectors if some are missing
-pad_effects <- function(effects, tra, link="log")
-{
-  # Set the value to fill dummy coefficients with
-  if (link=="log"){
-    na.value <- 1
-  } else {
-    na.value <- 0
-  }
-  
-  # Initialize dummy effects lists
-  new_effects <- list(I=NA, T=NA, A=NA)
-  
-  # Fill empty values  
-  for(i in c("Tree", "Time", "Age")){
-        
-    if (length(effects[[i]] > 0)){
-      new_effects[[i]] <-  effects[[i]]
-      
-      # Fill in dummy levels
-      if(length(effects[[i]]) < nlevels(tra[[i]]))
-      {
-        missing_names <- levels(tra[[i]])[!(levels(tra[[i]]) %in% names(effects[[i]]))]
-        missing_effects <- rep(na.value, times=length(missing_names))
-        names (missing_effects) <- missing_names
-        new_effects[[i]] <- c(effects[[i]], missing_effects)
-      }
-      
-    } else {
-      tra_dim <- which(c("Tree", "Time", "Age")==i)
-      
-      new_effects[[i]] <- rep.int(na.value, nlevels(tra[[tra_dim + 1]]))
-      effect_names <- levels(tra[[tra_dim + 1]])
-      if(i=="Time" | i=="Age")
-      {
-        effect_names <- as.numeric(as.character(effect_names))
-      }
-      names(new_effects[[i]]) <- sort(effect_names)
-    }
-  }
-  
-  return(new_effects)
-}
+# Cleaning up effects ####
 
-# Correctly order effect vectors
+# Correctly sort elements of the effect vectors
 sort_effects <- function(effects, tra)
 {
-  # Only ascending sorting as no "standard" order is retained
   sorted_effects <- list()
   
-  # Sort I
-  effect_names <- names(effects$Tree)
-  sorted_effects$Tree <- effects$Time[sort(effect_names)]
-  
-  # Sort T and A
-  for (j in c("Time", "Age"))
-  {
-    effect_names <- as.numeric(names(effects[[j]]))
-    sorted_effects[[j]] <- effects[[j]][as.character(sort(effect_names))]
+  for (i in names(effects)){
+    effect_names <- names(effects[[i]])
+    
+    # Sort time and age by ascending time
+    # Other variables are just sorted alphabetically
+    if (i == "Time" | i == "Age"){
+      effect_names <- as.numeric(as.character(effect_names))
+    }
+    
+    sorted_effects[[i]] <- effects[[i]][sort(effect_names)]
+    
   }
-  
+      
   return(sorted_effects)
 }
 
@@ -120,23 +79,29 @@ rescale_effects <- function (effects, link="log")
   
   mean_effects <- lapply(effects, mean, na.rm=T)  
   
-  # Scale I and T to mean of 0
-  # Scale A so sum of effects stays the same
+  # Scale Tree effect and Time effect to mean of 0
+  # Scale Age effect so sum of effects stays the same
   
-  # If A is missing, leave effects uncscaled
-  if(!sum(!is.null(effects$Age)))
+  # If Age effect is missing, try to add magnitude information to I
+  # Otherwise return raw effects
+  if(!("Age" %in% names(effects)))
   {
-    return (effects)
+    if (all(c("Tree", "Time") %in% names(effects))){
+      effects$Tree <- effects$Tree-mean_effects$Tree
+      effects$Time <- effects$Time+mean_effects$Tree
+    } else{
+      return (effects)
+    }
   }
   
   # I
-  if (sum (!is.null(effects$Tree))){
+  if ("Tree" %in% names(effects)){
     effects$Tree <- effects$Tree-mean_effects$Tree
     effects$Age <- effects$Age+mean_effects$Tree
   }
   
   # T
-  if (sum (!is.null(effects$Time))){
+  if ("Time" %in% names(effects)){
     effects$Time <- effects$Time-mean_effects$Time
     effects$Age <- effects$Age+mean_effects$Time
   }
