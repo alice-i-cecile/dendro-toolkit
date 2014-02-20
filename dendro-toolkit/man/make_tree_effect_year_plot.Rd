@@ -1,5 +1,5 @@
-\name{unflatten_effects}
-\alias{unflatten_effects}
+\name{make_tree_effect_year_plot}
+\alias{make_tree_effect_year_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,12 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-unflatten_effects(flat_effects)
+make_tree_effect_year_plot(effects, tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{flat_effects}{
-%%     ~~Describe \code{flat_effects} here~~
+  \item{effects}{
+%%     ~~Describe \code{effects} here~~
+}
+  \item{tra}{
+%%     ~~Describe \code{tra} here~~
 }
 }
 \details{
@@ -47,15 +50,13 @@ unflatten_effects(flat_effects)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (flat_effects) 
+function (effects, tra) 
 {
-    effects <- list()
-    id_code <- substr(names(flat_effects), 1, 1)
-    names(flat_effects) <- substr(names(flat_effects), 3, length(names(flat_effects)))
-    effects$I <- flat_effects[id_code == "I"]
-    effects$T <- flat_effects[id_code == "T"]
-    effects$A <- flat_effects[id_code == "A"]
-    return(effects)
+    birth_years <- sapply(names(effects$Tree), grab_birth_year)
+    df <- data.frame(tree = effects$Tree, birth_year = birth_years)
+    my_plot <- ggplot(df, aes(x = birth_year, y = tree)) + geom_point() + 
+        geom_smooth() + theme_bw() + ylab("Tree effect") + xlab("Year of birth")
+    return(my_plot)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

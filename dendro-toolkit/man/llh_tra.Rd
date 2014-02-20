@@ -8,15 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-llh_tra(residuals, error)
+llh_tra(residuals, link)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{residuals}{
 %%     ~~Describe \code{residuals} here~~
 }
-  \item{error}{
-%%     ~~Describe \code{error} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -50,11 +50,11 @@ llh_tra(residuals, error)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (residuals, error) 
+function (residuals, link) 
 {
-    sigma <- sigma_tra(residuals, error)
-    val <- residuals$G
-    if (error == "norm") {
+    sigma <- sigma_tra(residuals, link)
+    val <- residuals$Growth
+    if (link == "identity") {
         llh <- sum(dnorm(val, sd = sigma, log = TRUE))
     }
     else {

@@ -8,15 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-rescale_effects(effects, form = "multiplicative")
+rescale_effects(effects, link = "log")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{effects}{
 %%     ~~Describe \code{effects} here~~
 }
-  \item{form}{
-%%     ~~Describe \code{form} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -50,24 +50,30 @@ rescale_effects(effects, form = "multiplicative")
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (effects, form = "multiplicative") 
+function (effects, link = "log") 
 {
-    if (form == "multiplicative") {
+    if (link == "log") {
         effects <- lapply(effects, log)
     }
     mean_effects <- lapply(effects, mean, na.rm = T)
-    if (!sum(!is.null(effects[[3]]))) {
-        return(effects)
+    if (!("Age" \%in\% names(effects))) {
+        if (all(c("Tree", "Time") \%in\% names(effects))) {
+            effects$Tree <- effects$Tree - mean_effects$Tree
+            effects$Time <- effects$Time + mean_effects$Tree
+        }
+        else {
+            return(effects)
+        }
     }
-    if (sum(!is.null(effects[[1]]))) {
-        effects[[1]] <- effects[[1]] - mean_effects[[1]]
-        effects[[3]] <- effects[[3]] + mean_effects[[1]]
+    if ("Tree" \%in\% names(effects)) {
+        effects$Tree <- effects$Tree - mean_effects$Tree
+        effects$Age <- effects$Age + mean_effects$Tree
     }
-    if (sum(!is.null(effects[[2]]))) {
-        effects[[2]] <- effects[[2]] - mean_effects[[2]]
-        effects[[3]] <- effects[[3]] + mean_effects[[2]]
+    if ("Time" \%in\% names(effects)) {
+        effects$Time <- effects$Time - mean_effects$Time
+        effects$Age <- effects$Age + mean_effects$Time
     }
-    if (form == "multiplicative") {
+    if (link == "log") {
         effects <- lapply(effects, exp)
     }
     return(effects)

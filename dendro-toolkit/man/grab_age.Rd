@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-grab_age(i, tra, sparse = TRUE)
+grab_age(i, tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ grab_age(i, tra, sparse = TRUE)
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,15 +50,9 @@ grab_age(i, tra, sparse = TRUE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (i, tra, sparse = TRUE) 
+function (i, tra) 
 {
-    if (sparse) {
-        age <- max(as.numeric(as.character(tra[tra$i == i, "a"])))
-    }
-    else {
-        age_row <- min(which(!is.na(tra[i, , ]), arr.ind = T)[[2]])
-        age <- dimnames(tra)[[3]][age_row]
-    }
+    age <- max(as.numeric(as.character(tra[tra$Tree == i, "Age"])))
     return(as.numeric(age))
   }
 }

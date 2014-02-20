@@ -55,12 +55,12 @@ function (effects, tra = TRUE)
     birth_years <- get_birth_years(tra)
     birth_index <- sapply(birth_years, get_birth_index, tra = tra)
     k <- -birth_index
-    years <- sort(as.numeric(levels(tra$t)))
-    year_index <- match(names(effects$T), as.character(years))
-    names(year_index) <- names(effects$T)
-    ages <- sort(as.numeric(levels(tra$a)))
-    age_index <- match(names(effects$A), as.character(ages))
-    names(age_index) <- names(effects$A)
+    years <- sort(as.numeric(levels(tra$Time)))
+    year_index <- match(names(effects$Time), as.character(years))
+    names(year_index) <- names(effects$Time)
+    ages <- sort(as.numeric(levels(tra$Age)))
+    age_index <- match(names(effects$Age), as.character(ages))
+    names(age_index) <- names(effects$Age)
     k <- k[!is.na(k)]
     year_index <- year_index[!is.na(year_index)]
     age_index <- age_index[!is.na(age_index)]

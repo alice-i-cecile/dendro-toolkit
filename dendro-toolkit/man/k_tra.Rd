@@ -53,14 +53,14 @@ k_tra(tra, model)
 function (tra, model) 
 {
     k <- 1
-    if (model$I) {
-        k <- k + nlevels(tra$i)
+    if ("Tree" \%in\% model) {
+        k <- k + nlevels(tra$Tree)
     }
-    if (model$T) {
-        k <- k + nlevels(tra$t)
+    if ("Time" \%in\% model) {
+        k <- k + nlevels(tra$Time)
     }
-    if (model$A) {
-        k <- k + nlevels(tra$a)
+    if ("Age" \%in\% model) {
+        k <- k + nlevels(tra$Age)
     }
     num_effects <- sum(unlist(model))
     k <- ifelse(num_effects > 0, k - (num_effects - 1), 0)

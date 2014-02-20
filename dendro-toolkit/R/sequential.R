@@ -1,7 +1,18 @@
-# Regional curve standardization ####
+# Sequential standardization ####
+# Used in traditional regional curve standardization or flat detrending
 # effect_order: the order in which effects are sequentially estimated
-standardize_rcs <- function(tra, model=list(I=FALSE, A=TRUE, T=TRUE), form="multiplicative", error="lnorm")
+standardize_sequential <- function(tra, model=c("Age", "Time"), link="log")
 {
+  
+  # Convert information about link function to type of mean and form used
+  if(link=="log"){
+    error <- "lnorm"
+    form <- "multiplicative"
+  } else if (link=="identity"){
+    error <- "norm"
+    form <- "additive"    
+  }
+  
   
   # Select appropriate type of mean
   if (error=="lnorm"){
@@ -11,41 +22,23 @@ standardize_rcs <- function(tra, model=list(I=FALSE, A=TRUE, T=TRUE), form="mult
   }
   
   # Determine effect order from order in which I, T, A is listed
-  inc_effects <- names(model[unlist(model)==TRUE])
-  name_dim_dict <- c(I="I", T="T", A="A")
-  effect_order <- match(inc_effects, name_dim_dict)
+  inc_effects <- model
   
-  # Make a dummy list of effects
-  effects <- list(I=NULL, T=NULL, A=NULL)
+  # Create storage for the estimated effects
+  effects <- vector(mode="list", length=length(model))
+  names(effects) <- model
   
   # Make a dummy tree-ring array
   working_tra <- tra
   
   # Estimate the effects one at a time
-  for (effect in effect_order){
+  for (id in model){
     # Estimate an effect    
-    effects[[effect]] <- est_effect(working_tra, effect, mean_type)
+    effects[[id]] <- est_effect(working_tra, id, mean_type)
     
     # Remove the effect
-    working_tra <- remove_effect(working_tra, effects[[effect]], effect, form)
+    working_tra <- remove_effect(working_tra, effects[[id]], effect, link)
   }
   
-  # Fill in dummy values for effects not estimated
-  effects <- pad_effects(effects, tra, form, sparse)
-  
-  # Make sure effects are in the right order
-  effects <- sort_effects(effects, tra, sparse)
-  
-  # Rescale the effects to standard form
-  effects <- rescale_effects(effects, form)
-  
-  # Compute model fit statistics
-  fit <- model_fit_tra (effects, tra, model, form, error)
-  
-  # Record model fitting settings
-  settings <- list(model=model, form=form, error=error, method="rcs")
-  
-  out <- list(effects=effects, tra=tra, fit=fit, settings=settings)
-  
-  return (out)   
+  return (effects)   
 }

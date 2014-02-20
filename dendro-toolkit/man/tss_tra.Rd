@@ -8,15 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-tss_tra(tra, error)
+tss_tra(tra, link)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
 }
-  \item{error}{
-%%     ~~Describe \code{error} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -50,10 +50,10 @@ tss_tra(tra, error)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, error) 
+function (tra, link) 
 {
-    val <- tra$G
-    if (error == "lnorm") {
+    val <- tra$Growth
+    if (link == "log") {
         val <- log(val)
     }
     mean_val <- mean(val)

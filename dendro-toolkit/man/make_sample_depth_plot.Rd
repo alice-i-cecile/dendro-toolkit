@@ -1,5 +1,5 @@
-\name{extract_cv_gam}
-\alias{extract_cv_gam}
+\name{make_sample_depth_plot}
+\alias{make_sample_depth_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,12 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-extract_cv_gam(growth_model)
+make_sample_depth_plot(tra, id = "Time")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{growth_model}{
-%%     ~~Describe \code{growth_model} here~~
+  \item{tra}{
+%%     ~~Describe \code{tra} here~~
+}
+  \item{id}{
+%%     ~~Describe \code{id} here~~
 }
 }
 \details{
@@ -47,21 +50,14 @@ extract_cv_gam(growth_model)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (growth_model) 
+function (tra, id = "Time") 
 {
-    coeff <- dummy.coef(growth_model)
-    Q.cv <- coeff$Q.cv
-    F.cv <- coeff$F.cv
-    tab.tra <- growth_model$data
-    smooth_fit <- growth_model$smooth
-    unique_levels <- unique(tab.tra$A.num)
-    indices <- unlist(foreach(i = unique_levels) \%do\% {
-        match(i, tab.tra$A.num)
-    })
-    A.cv <- smooth_fit[indices]
-    names(A.cv) <- unique_levels
-    cv <- list(Q = Q.cv, F = F.cv, A = A.cv)
-    return(cv)
+    sample_depth <- sample_depth_tra(tra, id)
+    df <- data.frame(sample_depth = sample_depth, id = levels(tra[[id]]))
+    df$id <- as.numeric(as.character(df$id))
+    my_plot <- ggplot(df, aes(x = id, y = sample_depth)) + geom_area() + 
+        xlab(id) + ylab("Sample depth") + theme_bw()
+    return(my_plot)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

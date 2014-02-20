@@ -2,7 +2,7 @@
 # Fits models using maximum likelihood
 # Searches for solutions with various optimizing algorithms
 
-standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG" ...)
+standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG", ...)
 {
   
   # Create storage for the estimated effects

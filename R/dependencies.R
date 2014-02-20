@@ -5,7 +5,7 @@ library(dplR)
 
 # Utility
 library(foreach)
-library(dplyr)
+#library(dplyr)
 
 # Regression
 library(mgcv)

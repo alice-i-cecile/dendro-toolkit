@@ -8,15 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-sample_depth_tra(tra, factor.dim = 2)
+sample_depth_tra(tra, id = "Time")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
 }
-  \item{factor.dim}{
-%%     ~~Describe \code{factor.dim} here~~
+  \item{id}{
+%%     ~~Describe \code{id} here~~
 }
 }
 \details{
@@ -50,18 +50,18 @@ sample_depth_tra(tra, factor.dim = 2)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, factor.dim = 2) 
+function (tra, id = "Time") 
 {
-    positions <- tra[[factor.dim + 1]]
+    positions <- tra[[id]]
     ids <- levels(positions)
     sample_depth <- sapply(ids, function(x) {
         sum(positions == x)
     })
-    if (factor.dim == 1) {
-        ordering <- sort(names(sample_depth))
+    if (id == "Time" | id == "Age") {
+        ordering <- sort(as.numeric(names(sample_depth)))
     }
     else {
-        ordering <- sort(as.numeric(names(sample_depth)))
+        ordering <- sort(names(sample_depth))
     }
     sample_depth <- sample_depth[sapply(ordering, as.character)]
     return(sample_depth)

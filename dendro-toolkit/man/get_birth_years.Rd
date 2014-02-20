@@ -8,15 +8,12 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-get_birth_years(tra, sparse = TRUE)
+get_birth_years(tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -50,17 +47,10 @@ get_birth_years(tra, sparse = TRUE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, sparse = TRUE) 
+function (tra) 
 {
-    if (sparse) {
-        birth_years <- sapply(levels(tra$i), grab_birth_year, 
-            tra = tra, sparse)
-    }
-    else {
-        birth_years <- sapply(1:dim(tra)[1], grab_birth_year, 
-            tra = tra, sparse)
-        names(birth_years) <- dimnames(tra)[[1]]
-    }
+    birth_years <- sapply(levels(tra$Tree), grab_birth_year, 
+        tra = tra, sparse)
     return(birth_years)
   }
 }

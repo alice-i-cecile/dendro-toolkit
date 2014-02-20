@@ -123,7 +123,7 @@ remove_demons <- function (m=1, corrupted_effects, tra=TRUE, link="log"){
 }
 
 # Full post-hoc correction of demonic intrusion ####
-post_hoc_intercession <- function(corrupted_effects, tra=TRUE, link=="log")
+post_hoc_intercession <- function(corrupted_effects, tra=TRUE, link="log")
 {
   optimal_m <- estimate_demons(corrupted_effects, tra, link)
   

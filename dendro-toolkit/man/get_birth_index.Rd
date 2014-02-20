@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-get_birth_index(birth_year, tra, sparse)
+get_birth_index(birth_year, tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ get_birth_index(birth_year, tra, sparse)
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,14 +50,9 @@ get_birth_index(birth_year, tra, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (birth_year, tra, sparse) 
+function (birth_year, tra) 
 {
-    if (sparse) {
-        years <- sort(as.numeric(levels(tra$t)))
-    }
-    else {
-        years <- sort(as.numeric(dimnames(tra)[[2]]))
-    }
+    years <- sort(as.numeric(levels(tra$Time)))
     year_index <- which(birth_year == years)
     age_index <- 1
     birth_index <- year_index - age_index

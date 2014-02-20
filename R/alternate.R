@@ -7,7 +7,7 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_
   if(link=="log"){
     error <- "lnorm"
     form <- "multiplicative"
-  } else if (link="identity"){
+  } else if (link=="identity"){
     error <- "norm"
     form <- "additive"    
   }

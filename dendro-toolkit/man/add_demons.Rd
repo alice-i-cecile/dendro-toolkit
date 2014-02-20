@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-add_demons(m = 1, effects, tra = TRUE, form = "multiplicative")
+add_demons(m = 1, effects, tra = TRUE, link = "log")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,8 +21,8 @@ add_demons(m = 1, effects, tra = TRUE, form = "multiplicative")
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
 }
-  \item{form}{
-%%     ~~Describe \code{form} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -56,20 +56,21 @@ add_demons(m = 1, effects, tra = TRUE, form = "multiplicative")
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (m = 1, effects, tra = TRUE, form = "multiplicative") 
+function (m = 1, effects, tra = TRUE, link = "log") 
 {
     ridge_ids <- demonic_ritual(effects, tra)
     corrupted_effects <- effects
-    if (form == "multiplicative") {
+    if (link == "log") {
         corrupted_effects <- lapply(corrupted_effects, log)
     }
-    corrupted_effects$I <- corrupted_effects$I + m * ridge_ids$I
-    corrupted_effects$T <- corrupted_effects$T + m * ridge_ids$T
-    corrupted_effects$A <- corrupted_effects$A - m * ridge_ids$A
-    if (form == "multiplicative") {
+    corrupted_effects$Timeree <- corrupted_effects$Timeree + 
+        m * ridge_ids$Timeree
+    corrupted_effects$Time <- corrupted_effects$Time + m * ridge_ids$Time
+    corrupted_effects$Age <- corrupted_effects$Age - m * ridge_ids$Age
+    if (link == "log") {
         corrupted_effects <- lapply(corrupted_effects, exp)
     }
-    corrupted_effects <- rescale_effects(corrupted_effects, form)
+    corrupted_effects <- rescale_effects(corrupted_effects, link)
     return(corrupted_effects)
   }
 }

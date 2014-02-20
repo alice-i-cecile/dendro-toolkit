@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-remove_effect(tra, effect, factor.dim, form = "multiplicative")
+remove_effect(tra, effect, id, link = "log")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,11 +18,11 @@ remove_effect(tra, effect, factor.dim, form = "multiplicative")
   \item{effect}{
 %%     ~~Describe \code{effect} here~~
 }
-  \item{factor.dim}{
-%%     ~~Describe \code{factor.dim} here~~
+  \item{id}{
+%%     ~~Describe \code{id} here~~
 }
-  \item{form}{
-%%     ~~Describe \code{form} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -56,19 +56,18 @@ remove_effect(tra, effect, factor.dim, form = "multiplicative")
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, effect, factor.dim, form = "multiplicative") 
+function (tra, effect, id, link = "log") 
 {
-    id <- factor.dim + 1
     removed_tra <- tra
     for (effect_id in names(effect)) {
         relevant_rows <- tra[[id]] == effect_id
-        if (form == "additive") {
-            removed_tra[relevant_rows, "G"] <- removed_tra[relevant_rows, 
-                "G"] - effect[effect_id]
+        if (link == "identity") {
+            removed_tra[relevant_rows, "Growth"] <- removed_tra[relevant_rows, 
+                "Growth"] - effect[effect_id]
         }
         else {
-            removed_tra[relevant_rows, "G"] <- removed_tra[relevant_rows, 
-                "G"]/effect[effect_id]
+            removed_tra[relevant_rows, "Growth"] <- removed_tra[relevant_rows, 
+                "Growth"]/effect[effect_id]
         }
     }
     return(removed_tra)

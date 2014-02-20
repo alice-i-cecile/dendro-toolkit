@@ -8,15 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-sigma_tra(residuals, error)
+sigma_tra(residuals, link)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{residuals}{
 %%     ~~Describe \code{residuals} here~~
 }
-  \item{error}{
-%%     ~~Describe \code{error} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -50,10 +50,10 @@ sigma_tra(residuals, error)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (residuals, error) 
+function (residuals, link) 
 {
-    val <- residuals$G
-    if (error == "lnorm") {
+    val <- residuals$Growth
+    if (link == "log") {
         val <- log(val)
     }
     sigma <- sd(val)

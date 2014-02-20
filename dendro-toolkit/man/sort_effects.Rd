@@ -53,11 +53,12 @@ sort_effects(effects, tra)
 function (effects, tra) 
 {
     sorted_effects <- list()
-    effect_names <- names(effects$I)
-    sorted_effects$I <- effects$I[sort(effect_names)]
-    for (j in c("T", "A")) {
-        effect_names <- as.numeric(names(effects[[j]]))
-        sorted_effects[[j]] <- effects[[j]][as.character(sort(effect_names))]
+    for (i in names(effects)) {
+        effect_names <- names(effects[[i]])
+        if (i == "Time" | i == "Age") {
+            effect_names <- as.numeric(as.character(effect_names))
+        }
+        sorted_effects[[i]] <- effects[[i]][sort(effect_names)]
     }
     return(sorted_effects)
   }

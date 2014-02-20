@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-standardize_tra(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", error = "lnorm", method = "sfs", post_hoc = TRUE, ...)
+standardize_tra(tra, model = c("Age", "Time"), link = "log", optim = "sfs", post_hoc = TRUE, return_data = FALSE, make_plots = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,17 +18,20 @@ standardize_tra(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multip
   \item{model}{
 %%     ~~Describe \code{model} here~~
 }
-  \item{form}{
-%%     ~~Describe \code{form} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
-  \item{error}{
-%%     ~~Describe \code{error} here~~
-}
-  \item{method}{
-%%     ~~Describe \code{method} here~~
+  \item{optim}{
+%%     ~~Describe \code{optim} here~~
 }
   \item{post_hoc}{
 %%     ~~Describe \code{post_hoc} here~~
+}
+  \item{return_data}{
+%%     ~~Describe \code{return_data} here~~
+}
+  \item{make_plots}{
+%%     ~~Describe \code{make_plots} here~~
 }
   \item{\dots}{
 %%     ~~Describe \code{\dots} here~~
@@ -65,48 +68,56 @@ standardize_tra(tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multip
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, model = list(I = FALSE, T = TRUE, A = TRUE), form = "multiplicative", 
-    error = "lnorm", method = "sfs", post_hoc = TRUE, ...) 
+function (tra, model = c("Age", "Time"), link = "log", optim = "sfs", 
+    post_hoc = TRUE, return_data = FALSE, make_plots = TRUE, 
+    ...) 
 {
     if (ifelse(is.data.frame(tra), sum(tra$G <= 0), sum(tra[tra <= 
         0], na.rm = TRUE) > 0)) {
-        if (form == "multiplicative") {
-            warning("Zero or negative values found in data when using a multiplicative model. Estimated effects will not be stable.")
-        }
-        if (error == "lnorm") {
-            warning("Zero or negative values found in data when using a lognormal error form. Model fitting will fail, as non-positive values can not be generated using a log-normal distribution.")
+        if (link == "log") {
+            stop("Zero or negative values cannot be use. Estimated effects will not be stable.")
         }
     }
-    if ((form == "additive" & error == "lnorm") | (form == "multiplicative" & 
-        error == "norm")) {
-        warning("Model form and error distribution are an unrealistic match. Be sure to check the model residuals. Model fitting problems may arise.")
+    if (optim == "likelihood") {
+        effects <- standardize_likelihood(tra, model, link, ...)
     }
-    if (method == "likelihood") {
-        out <- standardize_likelihood(tra, model, form, error, 
-            ...)
+    else if (optim == "alternate") {
+        effects <- standardize_alternate(tra, model, link, ...)
     }
-    else if (method == "least_squares") {
-        out <- standardize_least_squares(tra, model, form, error, 
-            ...)
+    else if (optim == "rcs") {
+        effects <- standardize_sequential(tra, model, link, ...)
     }
-    else if (method == "sfs") {
-        out <- standardize_tsfs(tra, model, form, error, ...)
+    else if (optim == "gam") {
+        effects <- standardize_gam(tra, model, link, ...)
     }
-    else if (method == "rcs") {
-        out <- standardize_rcs(tra, model, form, error, ...)
-    }
-    else if (method == "gam") {
-        out <- standardize_gam(tra, model, form, error, ...)
-    }
-    if (sum(unlist(model)) == 3) {
+    if (("Tree" \%in\% model) & ("Time" \%in\% model) & ("Age" \%in\% 
+        model)) {
         if (post_hoc) {
-            out$effects <- post_hoc_intercession(out$effects, 
-                out$tra, form)
-            warning("Three effect model selected. Post-hoc selection was used to stabilize parameter estimates.")
+            effects <- post_hoc_intercession(out$effects, out$tra, 
+                link)
+            warning("Tree-time-age model selected. Post-hoc effect selection was used to stabilize parameter estimates.")
         }
         else {
-            warning("Three effect model selected. Parameter estimates are wildly unreliable. Consider using post-hoc selection.")
+            warning("Tree-time-age model selected. Parameter estimates will be unreliable. Consider using post-hoc effect selection.")
         }
+    }
+    effects <- sort_effects(effects, tra, sparse)
+    effects <- rescale_effects(effects, link)
+    fit <- model_fit_tra(effects, tra, model, link)
+    data <- list(original = tra, predicted = fit$predicted, residuals = fit$residuals)
+    fit <- fit[-which(names(fit) == "predicted" | names(fit) == 
+        "residuals")]
+    if (make_plots) {
+        plots <- make_standardization_plots(effects, data, link)
+        print(plots)
+    }
+    settings <- list(model = model, link = link, optim = optim)
+    out <- list(effects = effects, tra = tra, fit = fit, settings = settings)
+    if (return_data) {
+        out <- c(out, list(data = data))
+    }
+    if (make_plots) {
+        out <- c(out, list(plots = plots))
     }
     return(out)
   }

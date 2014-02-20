@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-grab_birth_year(i, tra, sparse = TRUE)
+grab_birth_year(i, tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -17,9 +17,6 @@ grab_birth_year(i, tra, sparse = TRUE)
 }
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
 }
 }
 \details{
@@ -53,18 +50,11 @@ grab_birth_year(i, tra, sparse = TRUE)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (i, tra, sparse = TRUE) 
+function (i, tra) 
 {
-    if (sparse) {
-        slice <- tra[tra$i == i, ][1, ]
-        birth_year <- as.numeric(as.character(slice$t)) - as.numeric(as.character(slice$a)) + 
-            1
-    }
-    else {
-        slice <- which(!is.na(tra[i, , ]), arr.ind = T)[1, ]
-        birth_index <- slice[1] - slice[2] + 1
-        birth_year <- as.numeric(dimnames(tra)[[2]][birth_index])
-    }
+    slice <- tra[tra$Tree == i, ][1, ]
+    birth_year <- as.numeric(as.character(slice$Time)) - as.numeric(as.character(slice$Age)) + 
+        1
     return(birth_year)
   }
 }

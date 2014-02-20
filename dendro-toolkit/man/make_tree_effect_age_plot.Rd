@@ -1,5 +1,5 @@
-\name{make_gnm_formula}
-\alias{make_gnm_formula}
+\name{make_tree_effect_age_plot}
+\alias{make_tree_effect_age_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,18 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-make_gnm_formula(incQ, incF, incA)
+make_tree_effect_age_plot(effects, tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{incQ}{
-%%     ~~Describe \code{incQ} here~~
+  \item{effects}{
+%%     ~~Describe \code{effects} here~~
 }
-  \item{incF}{
-%%     ~~Describe \code{incF} here~~
-}
-  \item{incA}{
-%%     ~~Describe \code{incA} here~~
+  \item{tra}{
+%%     ~~Describe \code{tra} here~~
 }
 }
 \details{
@@ -53,23 +50,13 @@ make_gnm_formula(incQ, incF, incA)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (incQ, incF, incA) 
+function (effects, tra) 
 {
-    dep.str <- "G"
-    vars.str <- ""
-    if (incQ) {
-        vars.str <- paste(vars.str, "Q.cv", sep = ",")
-    }
-    if (incF) {
-        vars.str <- paste(vars.str, "F.cv", sep = ",")
-    }
-    if (incA) {
-        vars.str <- paste(vars.str, "A.cv", sep = ",")
-    }
-    vars.str <- substr(vars.str, 2, nchar(vars.str))
-    ind.str <- paste("Mult(", vars.str, ")+0", sep = "")
-    formula.str <- paste(dep.str, ind.str, sep = "~")
-    return(formula.str)
+    ages <- sapply(names(effects$Tree), grab_age)
+    df <- data.frame(tree = effects$Tree, age = ages)
+    my_plot <- ggplot(df, aes(x = age, y = tree)) + geom_point() + 
+        geom_smooth() + theme_bw() + ylab("Tree effect") + xlab("Age at sampling")
+    return(my_plot)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

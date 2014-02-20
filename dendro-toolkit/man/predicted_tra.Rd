@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-predicted_tra(effects, tra, form)
+predicted_tra(effects, tra, link)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,8 +18,8 @@ predicted_tra(effects, tra, form)
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
 }
-  \item{form}{
-%%     ~~Describe \code{form} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -53,21 +53,22 @@ predicted_tra(effects, tra, form)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (effects, tra, form) 
+function (effects, tra, link) 
 {
     predicted <- tra
+    predicted$Growth <- 0
+    if (link == "log") {
+        tra$Growth <- log(tra$Growth)
+    }
     for (r in 1:nrow(predicted)) {
-        i <- as.character(tra[r, "i"])
-        t <- as.character(tra[r, "t"])
-        a <- as.character(tra[r, "a"])
-        if (form == "additive") {
-            predicted[r, "G"] <- effects$I[i] + effects$T[t] + 
-                effects$A[a]
+        for (e in model) {
+            i <- as.character(tra[r, e])
+            predicted[r, "Growth"] <- predicted[r, "Growth"] + 
+                effects[[e]][i]
         }
-        else {
-            predicted[r, "G"] <- effects$I[i] * effects$T[t] * 
-                effects$A[a]
-        }
+    }
+    if (link == "log") {
+        predicted$Growth <- exp(predicted$Growth)
     }
     return(predicted)
   }

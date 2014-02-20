@@ -1,5 +1,5 @@
-\name{make_lm_formula}
-\alias{make_lm_formula}
+\name{standardize_sequential}
+\alias{standardize_sequential}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,18 +8,18 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-make_lm_formula(incQ, incF, incA)
+standardize_sequential(tra, model = c("Age", "Time"), link = "log")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{incQ}{
-%%     ~~Describe \code{incQ} here~~
+  \item{tra}{
+%%     ~~Describe \code{tra} here~~
 }
-  \item{incF}{
-%%     ~~Describe \code{incF} here~~
+  \item{model}{
+%%     ~~Describe \code{model} here~~
 }
-  \item{incA}{
-%%     ~~Describe \code{incA} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -53,21 +53,32 @@ make_lm_formula(incQ, incF, incA)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (incQ, incF, incA) 
+function (tra, model = c("Age", "Time"), link = "log") 
 {
-    dep.str <- "G"
-    ind.str <- "0"
-    if (incQ) {
-        ind.str <- paste(ind.str, "Q.cv", sep = "+")
+    if (link == "log") {
+        error <- "lnorm"
+        form <- "multiplicative"
     }
-    if (incF) {
-        ind.str <- paste(ind.str, "F.cv", sep = "+")
+    else if (link == "identity") {
+        error <- "norm"
+        form <- "additive"
     }
-    if (incA) {
-        ind.str <- paste(ind.str, "A.cv", sep = "+")
+    if (error == "lnorm") {
+        mean_type <- "geometric"
     }
-    formula.str <- paste(dep.str, ind.str, sep = "~")
-    return(formula.str)
+    else {
+        mean_type <- "arithmetic"
+    }
+    inc_effects <- model
+    effects <- vector(mode = "list", length = length(model))
+    names(effects) <- model
+    working_tra <- tra
+    for (id in model) {
+        effects[[id]] <- est_effect(working_tra, id, mean_type)
+        working_tra <- remove_effect(working_tra, effects[[id]], 
+            effect, link)
+    }
+    return(effects)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-model_fit_tra(effects, tra, model, form, error, method = "sfs", k = NA)
+model_fit_tra(effects, tra, model, link, method = "alternate", k = NA)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,11 +21,8 @@ model_fit_tra(effects, tra, model, form, error, method = "sfs", k = NA)
   \item{model}{
 %%     ~~Describe \code{model} here~~
 }
-  \item{form}{
-%%     ~~Describe \code{form} here~~
-}
-  \item{error}{
-%%     ~~Describe \code{error} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
   \item{method}{
 %%     ~~Describe \code{method} here~~
@@ -65,22 +62,22 @@ model_fit_tra(effects, tra, model, form, error, method = "sfs", k = NA)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (effects, tra, model, form, error, method = "sfs", k = NA) 
+function (effects, tra, model, link, method = "alternate", k = NA) 
 {
     fit <- list()
     if (sum(unlist(model)) == 0) {
         fit$predicted <- tra
-        if (form == "additive") {
-            fit$predicted$G <- 0
+        if (link == "identity") {
+            fit$predicted$Growth <- 0
         }
         else {
-            fit$predicted$G <- 1
+            fit$predicted$Growth <- 1
         }
         fit$residuals <- tra
     }
     else {
-        fit$predicted <- predicted_tra(effects, tra, form)
-        fit$residuals <- residuals_tra(tra, fit$predicted, error)
+        fit$predicted <- predicted_tra(effects, tra, link)
+        fit$residuals <- residuals_tra(tra, fit$predicted, link)
     }
     fit$n <- n_tra(tra)
     if (method == "gam") {
@@ -89,14 +86,14 @@ function (effects, tra, model, form, error, method = "sfs", k = NA)
     else {
         fit$k <- k_tra(tra, model)
     }
-    fit$sigma <- sigma_tra(fit$residuals, error)
-    fit$tss <- tss_tra(tra, error)
-    fit$rss <- rss_tra(fit$residuals, error)
-    fit$llh <- llh_tra(fit$residuals, error)
+    fit$sigma <- sigma_tra(fit$residuals, link)
+    fit$tss <- tss_tra(tra, link)
+    fit$rss <- rss_tra(fit$residuals, link)
+    fit$llh <- llh_tra(fit$residuals, link)
     fit$Rsq <- Rsq_tra(fit$rss, fit$tss)
-    fit$adj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
-    fit$AIC <- AIC_tra(fit$llh, fit$k)
-    fit$AICc <- AICc_tra(fit$llh, fit$k, fit$n)
+    fit$Agedj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
+    fit$AgeIC <- AIC_tra(fit$llh, fit$k)
+    fit$AgeICc <- AICc_tra(fit$llh, fit$k, fit$n)
     fit$BIC <- BIC_tra(fit$llh, fit$k, fit$n)
     return(fit)
   }

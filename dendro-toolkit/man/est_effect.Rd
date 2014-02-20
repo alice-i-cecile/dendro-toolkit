@@ -8,15 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-est_effect(tra, factor.dim, mean_type = "arithmetic")
+est_effect(tra, id, mean_type = "arithmetic")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
 }
-  \item{factor.dim}{
-%%     ~~Describe \code{factor.dim} here~~
+  \item{id}{
+%%     ~~Describe \code{id} here~~
 }
   \item{mean_type}{
 %%     ~~Describe \code{mean_type} here~~
@@ -53,9 +53,8 @@ est_effect(tra, factor.dim, mean_type = "arithmetic")
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (tra, factor.dim, mean_type = "arithmetic") 
+function (tra, id, mean_type = "arithmetic") 
 {
-    id <- factor.dim + 1
     estimate_effect <- function(id_i) {
         data <- tra[tra[[id]] == id_i, "G"]
         if (mean_type == "geometric") {

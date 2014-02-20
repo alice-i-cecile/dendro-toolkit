@@ -8,7 +8,7 @@ standardize_sequential <- function(tra, model=c("Age", "Time"), link="log")
   if(link=="log"){
     error <- "lnorm"
     form <- "multiplicative"
-  } else if (link="identity"){
+  } else if (link=="identity"){
     error <- "norm"
     form <- "additive"    
   }
