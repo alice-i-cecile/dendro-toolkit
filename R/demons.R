@@ -26,12 +26,12 @@ demonic_ritual <- function(effects, tra=TRUE){
 
 
 # Add a demonic intrusion ####
-add_demons <- function (m=1, effects, tra=TRUE, form="multiplicative"){
+add_demons <- function (m=1, effects, tra=TRUE, link="log"){
   ridge_ids <- demonic_ritual(effects, tra)
   
   corrupted_effects <- effects
   
-  if(form=="multiplicative")
+  if(link=="log")
   {
     corrupted_effects <- lapply(corrupted_effects, log)
   }
@@ -46,21 +46,21 @@ add_demons <- function (m=1, effects, tra=TRUE, form="multiplicative"){
   # A = A - m*R
   corrupted_effects$Age <- corrupted_effects$Age - m*ridge_ids$Age
   
-  if(form=="multiplicative")
+  if(link=="log")
   {
     corrupted_effects <- lapply(corrupted_effects, exp)
   }
   
-  corrupted_effects <- rescale_effects(corrupted_effects, form)
+  corrupted_effects <- rescale_effects(corrupted_effects, link)
   return(corrupted_effects)
 }
 
 # Estimate a demonic intrusion ####
-estimate_demons <- function (corrupted_effects, tra=TRUE, form="multiplicative"){
+estimate_demons <- function (corrupted_effects, tra=TRUE, link="log"){
   ridge_ids <- demonic_ritual(corrupted_effects, tra)
   
   
-  if(form=="multiplicative")
+  if(link=="log")
   {
     corrupted_effects <- lapply(corrupted_effects, log)
   }
@@ -82,7 +82,7 @@ estimate_demons <- function (corrupted_effects, tra=TRUE, form="multiplicative")
   } 
 
   purify_probe <- function(m){
-    purified_effects <- remove_demons(m, corrupted_effects, tra, form="additive")
+    purified_effects <- remove_demons(m, corrupted_effects, tra, link="additive")
     llh <- demonic_llh(purified_effects)
     return(-llh)
   }
@@ -94,12 +94,12 @@ estimate_demons <- function (corrupted_effects, tra=TRUE, form="multiplicative")
 
 
 # Remove a demonic intrusion ####
-remove_demons <- function (m=1, corrupted_effects, tra=TRUE, form="multiplicative"){
+remove_demons <- function (m=1, corrupted_effects, tra=TRUE, link="log"){
   ridge_ids <- demonic_ritual(corrupted_effects, tra)
   
   effects <- corrupted_effects
   
-  if(form=="multiplicative")
+  if(link=="log")
   {
    effects <- lapply(effects, log)
   }
@@ -113,27 +113,27 @@ remove_demons <- function (m=1, corrupted_effects, tra=TRUE, form="multiplicativ
   # A = A - m*R
   effects$Age <- effects$Age + m*ridge_ids$Age
   
-  if(form=="multiplicative")
+  if(link=="log")
   {
     effects <- lapply(effects, exp)
   }
   
-  effects <- rescale_effects(effects, form)
+  effects <- rescale_effects(effects, link)
   return(effects)
 }
 
 # Full post-hoc correction of demonic intrusion ####
-post_hoc_intercession <- function(corrupted_effects, tra=TRUE, form="multiplicative")
+post_hoc_intercession <- function(corrupted_effects, tra=TRUE, link=="log")
 {
-  optimal_m <- estimate_demons(corrupted_effects, tra, form)
+  optimal_m <- estimate_demons(corrupted_effects, tra, link)
   
-  # Return suspiciously high trends
+  # Ignore correction in the case of suspiciously high trends
   if (abs(optimal_m) > 0.99){
     return(corrupted_effects)
   }
   
   print(paste("m of", optimal_m, "selected in choosing solution on likelihood ridge."))
-  purified <- remove_demons(optimal_m, corrupted_effects, tra, form)
+  purified <- remove_demons(optimal_m, corrupted_effects, tra, link)
   
   
   return(purified)
@@ -144,16 +144,16 @@ post_hoc_intercession <- function(corrupted_effects, tra=TRUE, form="multiplicat
 #effects <- ita_2$effects
 #tra <- ta_2$Timera
 
-#corrupted_effects <- add_demons(m=1, effects, tra, form="additive")
-#purified <- remove_demons(m=1, corrupted_effects, tra, form="additive")
+#corrupted_effects <- add_demons(m=1, effects, tra, link="additive")
+#purified <- remove_demons(m=1, corrupted_effects, tra, link="additive")
 
-#corrupted_effects <- add_demons(m=1, effects, tra, form="multiplicative")
-#purified <- remove_demons(m=1, corrupted_effects, tra, form="multiplicative")
+#corrupted_effects <- add_demons(m=1, effects, tra, link="log")
+#purified <- remove_demons(m=1, corrupted_effects, tra, link="log")
 
-#purified <-  remove_demons(m=-0.00633, effects, tra, form="multiplicative")
-#purified <-  post_hoc_intercession(effects, tra, form="multiplicative")
+#purified <-  remove_demons(m=-0.00633, effects, tra, link="log")
+#purified <-  post_hoc_intercession(effects, tra, link="log")
 
-#purified <- post_hoc_intercession(corrupted_effects, tra, form="multiplicative")
+#purified <- post_hoc_intercession(corrupted_effects, tra, link="log")
 
 
 #plot(ta_2$effects$Age)

@@ -2,7 +2,7 @@
 # Fits models using maximum likelihood
 # Searches for solutions with various optimizing algorithms
 
-standardize_mle <- function(tra, model=c("Time", "Age"), form="multiplicative", error="lnorm", method="CG" ...)
+standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG" ...)
 {
   
   # Create storage for the estimated effects
@@ -13,7 +13,7 @@ standardize_mle <- function(tra, model=c("Time", "Age"), form="multiplicative", 
   for (i in names(tra)[2:ncol(tra)]){
     dim_i <- nlevels(tra[[i]])
     
-    if (form=="additive")
+    if (link=="log")
     {
       effects[[i]] <-  rep.int(0,  dim_i)
     } else
@@ -28,10 +28,10 @@ standardize_mle <- function(tra, model=c("Time", "Age"), form="multiplicative", 
   fes_likelihood <- function(effects)
   {
     # Find the predicted values
-    predicted <- predicted_tra(effects, tra, form)
+    predicted <- predicted_tra(effects, tra, link)
     
     # Find the residuals
-    residuals <- residuals_tra(tra, predicted, error)
+    residuals <- residuals_tra(tra, predicted, link)
     
     # Find the likelihood
     llh <- llh_tra(residuals, error)

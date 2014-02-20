@@ -22,7 +22,7 @@ est_effect <- function (tra, id, mean_type="arithmetic")
 }
 
 # Remove an effect from a tree ring array
-remove_effect <- function (tra, effect, id, form="multiplicative")
+remove_effect <- function (tra, effect, id, link="log")
 {
     
   removed_tra <- tra
@@ -30,7 +30,7 @@ remove_effect <- function (tra, effect, id, form="multiplicative")
   for (effect_id in names(effect))
   {
     relevant_rows <- tra[[id]]==effect_id
-    if (form=="additive")
+    if (link=="identity")
     {
       removed_tra[relevant_rows,"Growth"] <- removed_tra[relevant_rows,"Growth"] - effect[effect_id]
     }
@@ -45,10 +45,10 @@ remove_effect <- function (tra, effect, id, form="multiplicative")
 }
 
 # Add dummy effect vectors if some are missing
-pad_effects <- function(effects, tra, form="multiplicative")
+pad_effects <- function(effects, tra, link="log")
 {
   # Set the value to fill dummy coefficients with
-  if (form=="multiplicative"){
+  if (link=="log"){
     na.value <- 1
   } else {
     na.value <- 0
@@ -109,11 +109,11 @@ sort_effects <- function(effects, tra)
 }
 
 # Rescale effect vectors to canonical form
-rescale_effects <- function (effects, form="multiplicative")
+rescale_effects <- function (effects, link="log")
 {
   # Multiplicative models should be scaled such that the geometric mean of the secondary effects is 1
   # So log transform, set mean to 0, then unlog
-  if (form=="multiplicative")
+  if (link=="log")
   {
     effects <- lapply(effects, log)
   }
@@ -141,7 +141,7 @@ rescale_effects <- function (effects, form="multiplicative")
     effects$Age <- effects$Age+mean_effects$Time
   }
   
-  if (form=="multiplicative")
+  if (link=="log")
   {
     effects <- lapply(effects, exp)
   }

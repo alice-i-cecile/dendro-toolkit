@@ -1,8 +1,16 @@
 # Alternate optimization ####
 # Cleans up signal-free regional curve standardization algorithm and allows expansion to N dimensions
 
-standardize_alternate <- function (tra, model=c("Time", "Age"), form="multiplicative", error="lnorm", cor_threshold=0.999999)
+standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_threshold=0.999999)
 {
+  # Convert information about link function to type of mean and form used
+  if(link=="log"){
+    error <- "lnorm"
+    form <- "multiplicative"
+  } else if (link="identity"){
+    error <- "norm"
+    form <- "additive"    
+  }
   
   # Select appropriate type of mean
   if (error=="lnorm"){
@@ -57,7 +65,7 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), form="multiplica
       est_j <- est_effect(working_tra, id, mean_type)
       
       # Remove them from the signal-free data
-      working_tra <- remove_effect (working_tra, est_j, id, form)
+      working_tra <- remove_effect (working_tra, est_j, id, link)
       
       # Combine them with previously determined effects for that dimension
       if (form == "additive")

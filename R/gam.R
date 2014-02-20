@@ -1,20 +1,11 @@
 # GAM fixed effects standardization ####
 
 # Main gam function
-standardize_gam <- function (tra, model=c("Time", "Age"), form="multiplicative", error="lnorm", sparse=TRUE, age_k=10, ...)
+standardize_gam <- function (tra, model=c("Time", "Age"), link=="log", sparse=TRUE, age_k=10, ...)
 {
-  # Confirm that form and error match, otherwise GAMs can't be used
-  if (
-    (form=="additive" & error=="lnorm")
-    |
-      (form=="multiplicative" & error=="norm")
-  )
-  {
-    simpleError("Model form and error distribution are an unrealistic match. Generalized additive models cannot be used for this configuration.")
-  }
   
   # Clean age info to ensure numeric form
-  tra$Agege <- as.numeric(as.character(tra$Agege))
+  tra$Age <- as.numeric(as.character(tra$Age))
   
   # Construct formula for regression
   growth_formula <- as.formula(make_gam_formula(model))
@@ -27,16 +18,15 @@ standardize_gam <- function (tra, model=c("Time", "Age"), form="multiplicative",
   print ("Model initialized.")
   print (growth_formula)
   
-  # If form is additive and error is additive and normal:
-  # Use GAM regression with a log-link
-  if (form == "additive")
+  # Set family to use appropriate link
+  if (link=="identity")
   {
     family <- gaussian(link="identity")
   }
   
   # If form is multiplicative and error is multiplicative log-normal:  
   # Use GAM regression with a log-link
-  if (form == "multiplicative")
+  else if (link=="log")
   {
     # More correct. TODO
     #family <- gaussian(link="log")
@@ -55,7 +45,7 @@ standardize_gam <- function (tra, model=c("Time", "Age"), form="multiplicative",
   #effects <- extract_effects_gam(growth_model, model, form, tra)
   
   # Log-transformation hack
-  effects <- extract_effects_gam(growth_model, model, form="additive", tra)
+  effects <- extract_effects_gam(growth_model, model, link=="log", tra)
   if (form=="multiplicative")
   {
     effects <- lapply(effects, exp)
@@ -90,7 +80,7 @@ make_gam_formula <- function (model){
 }
 
 # Extracting effects for gam models
-extract_effects_gam <- function(growth_model, model, form, tra)
+extract_effects_gam <- function(growth_model, model, link, tra)
 {
   
   # Extract coefficients for I and T directly
