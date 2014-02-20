@@ -2,7 +2,7 @@
 # Model fit statistics ####
 
 # Compute all the relevant model fit statistics for fixed-effects standardization
-model_fit_tra <- function(effects, tra, model, form, error, method="sfs", k=NA)
+model_fit_tra <- function(effects, tra, model, form, error, method="alternate", k=NA)
 {
   
   fit <- list()
@@ -15,10 +15,10 @@ model_fit_tra <- function(effects, tra, model, form, error, method="sfs", k=NA)
     
     if (form=="additive")
     {
-      fit$predicted$G <- 0
+      fit$predicted$Growth <- 0
     } else
     {
-      fit$predicted$G <- 1
+      fit$predicted$Growth <- 1
     }
     
     # Residuals of the null model are the observed data
@@ -38,15 +38,15 @@ model_fit_tra <- function(effects, tra, model, form, error, method="sfs", k=NA)
   }
   fit$sigma <- sigma_tra(fit$residuals, error)
   
-  fit$tss <- tss_tra(tra, error)
+  fit$Timess <- tss_tra(tra, error)
   fit$rss <- rss_tra(fit$residuals, error)
   fit$llh <- llh_tra(fit$residuals, error)
   
-  fit$Rsq <- Rsq_tra(fit$rss, fit$tss)
-  fit$adj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
+  fit$Rsq <- Rsq_tra(fit$rss, fit$Timess)
+  fit$Agedj.Rsq <- adj.Rsq_tra(fit$rss, fit$Timess, fit$n, fit$k)
   
-  fit$AIC <- AIC_tra(fit$llh, fit$k)
-  fit$AICc <- AICc_tra(fit$llh, fit$k, fit$n)
+  fit$AgeIC <- AIC_tra(fit$llh, fit$k)
+  fit$AgeICc <- AICc_tra(fit$llh, fit$k, fit$n)
   fit$BIC <- BIC_tra(fit$llh, fit$k, fit$n)
   
   return(fit)
@@ -59,17 +59,17 @@ predicted_tra <- function (effects, tra, form)
   
   for (r in 1:nrow(predicted))
   {
-    i <- as.character(tra[r, "i"])
-    t <- as.character(tra[r, "t"])
-    a <- as.character(tra[r, "a"])
+    i <- as.character(tra[r, "Tree"])
+    t <- as.character(tra[r, "Time"])
+    a <- as.character(tra[r, "Age"])
     
     if (form=="additive")
     {
-      predicted[r, "G"] <- effects$I[i] + effects$T[t] + effects$A[a]
+      predicted[r, "Growth"] <- effects$Timeree[i] + effects$Time[t] + effects$Age[a]
     }
     else
     {
-      predicted[r, "G"] <- effects$I[i] * effects$T[t] * effects$A[a]
+      predicted[r, "Growth"] <- effects$Timeree[i] * effects$Time[t] * effects$Age[a]
     }
   }
   
@@ -83,11 +83,11 @@ residuals_tra <- function (tra, predicted, error)
   
   if (error=="norm")
   {
-    residuals$G <- tra$G - predicted$G
+    residuals$Growth <- tra$Growth - predicted$Growth
   }
   else
   {
-    residuals$G <- tra$G / predicted$G
+    residuals$Growth <- tra$Growth / predicted$Growth
   }
   
   return (residuals)
@@ -110,17 +110,17 @@ k_tra <- function (tra, model)
   k <- 1
   
   # One parameter is estimated for each index of the effect vectors
-  if (model$I)
+  if (model$Timeree)
   {
-    k <- k + nlevels(tra$i)
+    k <- k + nlevels(tra$Timeree)
   }
-  if (model$T)
+  if (model$Time)
   {
-    k <- k + nlevels(tra$t)
+    k <- k + nlevels(tra$Time)
   }
-  if (model$A)
+  if (model$Age)
   {
-    k <- k + nlevels(tra$a)
+    k <- k + nlevels(tra$Age)
   }
   
   # Information about some parameters is lost due to rescaling (dummy variable trap)
@@ -136,7 +136,7 @@ k_tra <- function (tra, model)
 sigma_tra <- function (residuals, error)
 {
   
-  val <- residuals$G
+  val <- residuals$Growth
   if (error=="lnorm")
   {
     val <- log(val)
@@ -151,7 +151,7 @@ sigma_tra <- function (residuals, error)
 # Total sum of squares
 tss_tra <- function (tra, error)
 {
-  val <- tra$G
+  val <- tra$Growth
   if (error=="lnorm")
   {
     val <- log(val)
@@ -166,7 +166,7 @@ tss_tra <- function (tra, error)
 # Residual sum of squares
 rss_tra <- function (residuals, error)
 {
-  val <- residuals$G
+  val <- residuals$Growth
   if (error=="lnorm")
   {
     val <- log(val)
@@ -184,7 +184,7 @@ llh_tra <- function (residuals, error)
   
   sigma <- sigma_tra(residuals, error)
   
-  val <- residuals$G
+  val <- residuals$Growth
   
   # Likelihood is proportional to the probability of observing the data, given the parameters
   if(error=="norm")

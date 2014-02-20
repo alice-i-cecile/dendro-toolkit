@@ -22,7 +22,7 @@ est_effect <- function (tra, id, mean_type="arithmetic")
 }
 
 # Remove an effect from a tree ring array
-remove_effect <- function (tra, effect, factor.dim, form="multiplicative")
+remove_effect <- function (tra, effect, id, form="multiplicative")
 {
     
   removed_tra <- tra
@@ -32,11 +32,11 @@ remove_effect <- function (tra, effect, factor.dim, form="multiplicative")
     relevant_rows <- tra[[id]]==effect_id
     if (form=="additive")
     {
-      removed_tra[relevant_rows,"G"] <- removed_tra[relevant_rows,"G"] - effect[effect_id]
+      removed_tra[relevant_rows,"Growth"] <- removed_tra[relevant_rows,"Growth"] - effect[effect_id]
     }
     else
     {
-      removed_tra[relevant_rows,"G"] <- removed_tra[relevant_rows,"G"] / effect[effect_id]
+      removed_tra[relevant_rows,"Growth"] <- removed_tra[relevant_rows,"Growth"] / effect[effect_id]
     }
   }
   
@@ -58,28 +58,26 @@ pad_effects <- function(effects, tra, form="multiplicative")
   new_effects <- list(I=NA, T=NA, A=NA)
   
   # Fill empty values  
-  for(i in c("I", "T", "A")){
-    
-    j <- c(I="i", T="t", A="a")[i]
-    
+  for(i in c("Tree", "Time", "Age")){
+        
     if (length(effects[[i]] > 0)){
       new_effects[[i]] <-  effects[[i]]
       
       # Fill in dummy levels
-      if(length(effects[[i]]) < nlevels(tra[[j]]))
+      if(length(effects[[i]]) < nlevels(tra[[i]]))
       {
-        missing_names <- levels(tra[[j]])[!(levels(tra[[j]]) %in% names(effects[[i]]))]
+        missing_names <- levels(tra[[i]])[!(levels(tra[[i]]) %in% names(effects[[i]]))]
         missing_effects <- rep(na.value, times=length(missing_names))
         names (missing_effects) <- missing_names
         new_effects[[i]] <- c(effects[[i]], missing_effects)
       }
       
     } else {
-      tra_dim <- which(c("I", "T", "A")==i)
+      tra_dim <- which(c("Tree", "Time", "Age")==i)
       
       new_effects[[i]] <- rep.int(na.value, nlevels(tra[[tra_dim + 1]]))
       effect_names <- levels(tra[[tra_dim + 1]])
-      if(i=="T" | i=="A")
+      if(i=="Time" | i=="Age")
       {
         effect_names <- as.numeric(as.character(effect_names))
       }
@@ -97,11 +95,11 @@ sort_effects <- function(effects, tra)
   sorted_effects <- list()
   
   # Sort I
-  effect_names <- names(effects$I)
-  sorted_effects$I <- effects$I[sort(effect_names)]
+  effect_names <- names(effects$Tree)
+  sorted_effects$Tree <- effects$Time[sort(effect_names)]
   
   # Sort T and A
-  for (j in c("T", "A"))
+  for (j in c("Time", "Age"))
   {
     effect_names <- as.numeric(names(effects[[j]]))
     sorted_effects[[j]] <- effects[[j]][as.character(sort(effect_names))]
@@ -126,21 +124,21 @@ rescale_effects <- function (effects, form="multiplicative")
   # Scale A so sum of effects stays the same
   
   # If A is missing, leave effects uncscaled
-  if(!sum(!is.null(effects[[3]])))
+  if(!sum(!is.null(effects$Age)))
   {
     return (effects)
   }
   
   # I
-  if (sum (!is.null(effects[[1]]))){
-    effects[[1]] <- effects[[1]]-mean_effects[[1]]
-    effects[[3]] <- effects[[3]]+mean_effects[[1]]
+  if (sum (!is.null(effects$Tree))){
+    effects$Tree <- effects$Tree-mean_effects$Tree
+    effects$Age <- effects$Age+mean_effects$Tree
   }
   
   # T
-  if (sum (!is.null(effects[[2]]))){
-    effects[[2]] <- effects[[2]]-mean_effects[[2]]
-    effects[[3]] <- effects[[3]]+mean_effects[[2]]
+  if (sum (!is.null(effects$Time))){
+    effects$Time <- effects$Time-mean_effects$Time
+    effects$Age <- effects$Age+mean_effects$Time
   }
   
   if (form=="multiplicative")
