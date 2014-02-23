@@ -1,5 +1,5 @@
-\name{post_hoc_intercession}
-\alias{post_hoc_intercession}
+\name{make_sample_depth_plot}
+\alias{make_sample_depth_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,21 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-post_hoc_intercession(corrupted_effects, tra, sparse = TRUE, form = "multiplicative")
+make_sample_depth_plot(tra, id = "Time")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{corrupted_effects}{
-%%     ~~Describe \code{corrupted_effects} here~~
-}
   \item{tra}{
 %%     ~~Describe \code{tra} here~~
 }
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
-}
-  \item{form}{
-%%     ~~Describe \code{form} here~~
+  \item{id}{
+%%     ~~Describe \code{id} here~~
 }
 }
 \details{
@@ -56,17 +50,14 @@ post_hoc_intercession(corrupted_effects, tra, sparse = TRUE, form = "multiplicat
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (corrupted_effects, tra, sparse = TRUE, form = "multiplicative") 
+function (tra, id = "Time") 
 {
-    optimal_m <- estimate_demons(corrupted_effects, tra, sparse, 
-        form)
-    if (abs(optimal_m) > 0.99) {
-        return(corrupted_effects)
-    }
-    print(paste("m of", optimal_m, "selected in choosing solution on likelihood ridge."))
-    purified <- remove_demons(optimal_m, corrupted_effects, tra, 
-        sparse, form)
-    return(purified)
+    sample_depth <- sample_depth_tra(tra, id)
+    df <- data.frame(sample_depth = sample_depth, id = levels(tra[[id]]))
+    df$id <- as.numeric(as.character(df$id))
+    my_plot <- ggplot(df, aes(x = id, y = sample_depth)) + geom_area() + 
+        xlab(id) + ylab("Sample depth") + theme_bw()
+    return(my_plot)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

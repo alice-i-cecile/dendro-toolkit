@@ -1,5 +1,5 @@
-\name{make_lm_formula}
-\alias{make_lm_formula}
+\name{make_effect_plot}
+\alias{make_effect_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,18 +8,18 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-make_lm_formula(incQ, incF, incA)
+make_effect_plot(effects, effect_name, temporal = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{incQ}{
-%%     ~~Describe \code{incQ} here~~
+  \item{effects}{
+%%     ~~Describe \code{effects} here~~
 }
-  \item{incF}{
-%%     ~~Describe \code{incF} here~~
+  \item{effect_name}{
+%%     ~~Describe \code{effect_name} here~~
 }
-  \item{incA}{
-%%     ~~Describe \code{incA} here~~
+  \item{temporal}{
+%%     ~~Describe \code{temporal} here~~
 }
 }
 \details{
@@ -53,21 +53,21 @@ make_lm_formula(incQ, incF, incA)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (incQ, incF, incA) 
+function (effects, effect_name, temporal = FALSE) 
 {
-    dep.str <- "G"
-    ind.str <- "0"
-    if (incQ) {
-        ind.str <- paste(ind.str, "Q.cv", sep = "+")
+    df <- data.frame(effect = effects[[effect_name]], id = names(effects[[effect_name]]))
+    if (temporal) {
+        df$id <- as.numeric(as.character(df$id))
     }
-    if (incF) {
-        ind.str <- paste(ind.str, "F.cv", sep = "+")
+    my_plot <- ggplot(df, aes(x = id, y = effect)) + theme_bw() + 
+        ylab(paste(effect_name, "effect")) + xlab(effect_name)
+    if (temporal) {
+        my_plot <- my_plot + geom_line()
     }
-    if (incA) {
-        ind.str <- paste(ind.str, "A.cv", sep = "+")
+    else {
+        my_plot <- my_plot + geom_bar()
     }
-    formula.str <- paste(dep.str, ind.str, sep = "~")
-    return(formula.str)
+    return(my_plot)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

@@ -1,5 +1,5 @@
-\name{get_birth_index}
-\alias{get_birth_index}
+\name{make_residual_density_plot}
+\alias{make_residual_density_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,18 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-get_birth_index(birth_year, tra, sparse)
+make_residual_density_plot(residuals, link)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{birth_year}{
-%%     ~~Describe \code{birth_year} here~~
+  \item{residuals}{
+%%     ~~Describe \code{residuals} here~~
 }
-  \item{tra}{
-%%     ~~Describe \code{tra} here~~
-}
-  \item{sparse}{
-%%     ~~Describe \code{sparse} here~~
+  \item{link}{
+%%     ~~Describe \code{link} here~~
 }
 }
 \details{
@@ -53,18 +50,27 @@ get_birth_index(birth_year, tra, sparse)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (birth_year, tra, sparse) 
+function (residuals, link) 
 {
-    if (sparse) {
-        years <- sort(as.numeric(levels(tra$t)))
+    df <- data.frame(residuals = residuals$Growth)
+    my_plot <- ggplot(df, aes(x = effect)) + theme_bw() + ylab("Density estimate") + 
+        xlab("Residuals") + geom_density(colour = "red", fill = "red", 
+        alpha = 0.5)
+    x_min <- min(min(scaled_effect), 0)
+    x_max <- max(scaled_effect)
+    x_ticks <- seq(from = x_min, to = x_max, length.out = 100)
+    if (link == "identity") {
+        pdf_sd <- sd(effect)
+        pdf <- dnorm(x_ticks, sd = pdf_sd)
     }
-    else {
-        years <- sort(as.numeric(dimnames(tra)[[2]]))
+    else if (link == "log") {
+        pdf_sd <- sd(log(effect))
+        pdf <- dlnorm(x_ticks, sdlog = pdf_sd)
     }
-    year_index <- which(birth_year == years)
-    age_index <- 1
-    birth_index <- year_index - age_index
-    return(birth_index)
+    pdf_data <- data.frame(effect = x_ticks, density = pdf)
+    my_plot <- my_plot + geom_area(data = pdf_data, aes(x = effect, 
+        y = density), colour = "black", fill = "black", alpha = 0.5)
+    return(my_plot)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

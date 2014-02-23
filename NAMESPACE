@@ -1,1 +1,6 @@
+# Import package dependencies ####
+import(dplR, foreach, mgcv, ggplot2)
+
+# Export external functions ####
 exportPattern("^[[:alpha:]]+")
+

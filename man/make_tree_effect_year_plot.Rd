@@ -1,5 +1,5 @@
-\name{getEndpoints}
-\alias{getEndpoints}
+\name{make_tree_effect_year_plot}
+\alias{make_tree_effect_year_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
@@ -8,15 +8,15 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-getEndpoints(series, side = "start")
+make_tree_effect_year_plot(effects, tra)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{series}{
-%%     ~~Describe \code{series} here~~
+  \item{effects}{
+%%     ~~Describe \code{effects} here~~
 }
-  \item{side}{
-%%     ~~Describe \code{side} here~~
+  \item{tra}{
+%%     ~~Describe \code{tra} here~~
 }
 }
 \details{
@@ -50,15 +50,13 @@ getEndpoints(series, side = "start")
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (series, side = "start") 
+function (effects, tra) 
 {
-    rings <- subset(series, !is.na(series))
-    if (side == "start") {
-        return(head(rownames(rings), 1))
-    }
-    if (side == "stop") {
-        return(tail(rownames(rings), 1))
-    }
+    birth_years <- sapply(names(effects$Tree), grab_birth_year)
+    df <- data.frame(tree = effects$Tree, birth_year = birth_years)
+    my_plot <- ggplot(df, aes(x = birth_year, y = tree)) + geom_point() + 
+        geom_smooth() + theme_bw() + ylab("Tree effect") + xlab("Year of birth")
+    return(my_plot)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
