@@ -3,21 +3,6 @@
 
 standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_threshold=0.999999)
 {
-  # Convert information about link function to type of mean and form used
-  if(link=="log"){
-    error <- "lnorm"
-    form <- "multiplicative"
-  } else if (link=="identity"){
-    error <- "norm"
-    form <- "additive"    
-  }
-  
-  # Select appropriate type of mean
-  if (error=="lnorm"){
-    mean_type <- "geometric"
-  } else {
-    mean_type <- "arithmetic"
-  }
   
   # Create storage for the estimated effects
   effects <- vector(mode="list", length=length(model))
@@ -38,7 +23,6 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_
     names(effects[[i]]) <- levels(tra[[i]])
   }
   
-  # Determine effect order from order in which model is given  
   # Don't attempt to fit null models
   if (length(model)==0)
   {
@@ -59,16 +43,17 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_
     iteration <- iteration +1
     print (paste("Iteration", iteration))
     
+    # Determine effect order from order in which model is given  
     for (id in model){
       
       # Estimate the effects across each dimension
-      est_j <- est_effect(working_tra, id, mean_type)
+      est_j <- est_effect(working_tra, id, link)
       
       # Remove them from the signal-free data
       working_tra <- remove_effect (working_tra, est_j, id, link)
       
       # Combine them with previously determined effects for that dimension
-      if (form == "additive")
+      if (link == "identity")
       {
         effects[[id]] <- effects[[id]] + est_j
       } else
@@ -78,12 +63,12 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_
     }
     
     # Check for convergence. Use the log-correlation if the error term is suspected to be multiplicative lognormal    
-    if (error=="norm"){
+    if (link=="identity"){
       conv_cor <- cor(working_tra$Growth, last_tra$Growth)       
     } else {
         conv_cor <- cor(log(working_tra$Growth), log(last_tra$Growth))
     }
-    
+        
     if (conv_cor>=cor_threshold){
       converged <- TRUE
     }
