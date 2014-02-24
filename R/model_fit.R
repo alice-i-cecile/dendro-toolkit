@@ -207,6 +207,7 @@ llh_tra <- function (residuals, link)
 }
 
 # R^2
+# Follow Nakagawa, S., Schielzeth, H. (2013), A general and simple method for obtaining R2 from generalized linear mixed-effects models. Methods in Ecology and Evolution, 4: 133–142.
 Rsq_tra <- function (rss, tss)
 {
   Rsq <- 1-rss/tss
