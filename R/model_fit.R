@@ -43,10 +43,10 @@ model_fit_tra <- function(effects, tra, model, link, method="alternate", k=NA)
   fit$llh <- llh_tra(fit$residuals, link)
   
   fit$Rsq <- Rsq_tra(fit$rss, fit$tss)
-  fit$Agedj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
+  fit$Adj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
   
-  fit$AgeIC <- AIC_tra(fit$llh, fit$k)
-  fit$AgeICc <- AICc_tra(fit$llh, fit$k, fit$n)
+  fit$AIC <- AIC_tra(fit$llh, fit$k)
+  fit$AICc <- AICc_tra(fit$llh, fit$k, fit$n)
   fit$BIC <- BIC_tra(fit$llh, fit$k, fit$n)
   
   return(fit)
