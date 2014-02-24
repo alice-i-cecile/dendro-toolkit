@@ -111,6 +111,103 @@ mle_3 <- standardize_tra(realistic_incomplete_tra, optim="mle")
 rss_3 <- standardize_tra(realistic_incomplete_tra, optim="rss")
 glm_3 <- standardize_tra(realistic_incomplete_tra, optim="glm")
 gam_3 <- standardize_tra(realistic_incomplete_tra, optim="gam")
+# Model fit ####
+model_fit_1 <- data.frame(seq=unlist(seq_1$fit),
+                          alt=unlist(alt_1$fit),
+                          glm=unlist(glm_1$fit),
+                          gam=unlist(gam_1$fit)
+)
+
+model_fit_2 <- data.frame(seq=unlist(seq_1$fit),
+                          alt=unlist(alt_1$fit),
+                          glm=unlist(glm_1$fit),
+                          gam=unlist(gam_1$fit)
+)
+
+model_fit_3 <- data.frame(seq=unlist(seq_1$fit),
+                          alt=unlist(alt_1$fit),
+                          glm=unlist(glm_1$fit),
+                          gam=unlist(gam_1$fit)
+)
+
+print(model_fit_1)
+print(model_fit_2)
+print(model_fit_3)
+
+# Collating data ####
+
+# Setup
+model_list <- c("True", "Seq", "Alt", "GLM", "GAM")
+
+# Tree_model <- rep(model_list, each=length(true_effects$Tree))
+Time_model <- rep(model_list, each=length(true_effects$Time))
+Age_model <- rep(model_list, each=length(true_effects$Age))
+
+# Tree_id <- rep(true_effects$Tree, times=length(model_list))
+Time_id <- rep(true_effects$Time, times=length(model_list))
+Age_id <- rep(true_effects$Age, times=length(model_list))
+
+
+# Case 1
+# Tree_1 <- data.frame(effect=c(true_effects$Tree, seq_1$Tree, alt_1$Tree, glm_1$Tree, gam_1$Tree), model=Tree_model, id=Tree_id, case=1)
+
+Time_1 <- data.frame(effect=c(true_effects$Time, seq_1$Time, alt_1$Time, glm_1$Time, gam_1$Time), model=Time_model, id=Time_id, case=1)
+
+Age_1 <- data.frame(effect=c(true_effects$Age, seq_1$Age, alt_1$Age, glm_1$Age, gam_1$Age, model=Age_model), id=Age_id, case=1)
+
+# Case 2
+# Tree_2 <- data.frame(effect=c(true_effects$Tree, seq_2$Tree, alt_2$Tree, glm_2$Tree, gam_2$Tree), model=Tree_model, id=Tree_id, case=2)
+
+Time_2 <- data.frame(effect=c(true_effects$Time, seq_2$Time, alt_2$Time, glm_2$Time, gam_2$Time), model=Time_model, id=Time_id, case=2)
+
+Age_2 <- data.frame(effect=c(true_effects$Age, seq_2$Age, alt_2$Age, glm_2$Age, gam_2$Age, model=Age_model), id=Age_id, case=2)
+
+# Case 3
+# Tree_3 <- data.frame(effect=c(true_effects$Tree, seq_3$Tree, alt_3$Tree, glm_3$Tree, gam_3$Tree), model=Tree_model, id=Tree_id, case=3)
+
+Time_3 <- data.frame(effect=c(true_effects$Time, seq_3$Time, alt_3$Time, glm_3$Time, gam_3$Time), model=Time_model, id=Time_id, case=3)
+
+Age_1 <- data.frame(effect=c(true_effects$Age, seq_1$Age, alt_1$Age, glm_1$Age, gam_1$Age, model=Age_model), id=Age_id, case=1)
+
+# Collating data
+# Tree_df <- rbind(Tree_1, Tree_2, Tree_3)
+Time_df <- rbind(Time_1, Time_2, Time_3)
+Age_df <- rbind(Age_1, Age_2, Age_3)
+
+Time_df$id <- as.numeric(as.character(Time_df$id))
+Age_df$id <- as.numeric(as.character(Age_df$id))
+
+# Tree_df_nt <- Tree_df[-Tree_df$model=="True",]
+Time_df_ratio <- Time_df[-Time_df$model=="True",]
+Age_df_ratio <- Age_df[-Age_df$model=="True",]
+
+Time_df_ratio$effect <- Time_df_ratio$effect - true_effects$Time
+Age_df_ratio$effect <- Age_df_ratio$effect - true_effects$Age
+
+# Summary plots ####
+
+# Raw effects
+# Tree_raw_plot <- ggplot(Tree_df, aes(x=id, y=effect)) + geom_bar(stat="identity")  + facet_grid(case~model) + theme_bw() + xlab("Tree") + ylab("Effect")
+
+Time_raw_plot <- ggplot(Time_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Year") + ylab("Effect") + hline()
+
+Age_raw_plot <- ggplot(Age_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Effect")
+
+# Relative to true
+# Tree_scatter_plot <- ggplot(Tree_df_nt, aes(x=log(effect), y=log(true_effects$Tree))) + geom_point()  + facet_grid(case~model) + theme_bw() + xlab("Log-Estimated Tree Effect") + ylab("Log-True Tree Effect") + geom_smooth() + geom_abline(intercept=0, slope=1)
+
+Time_ratio_plot <- ggplot(Time_df_ratio, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Year") + ylab("Ratio between estimated and true effect") + geom_hline(y=1)
+
+Age_ratio_plot <- ggplot(Age_df_ratio, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Ratio between estimated and true effect")
+
+# Printing
+# print(Tree_raw_plot)
+print(Time_raw_plot)
+print(Age_raw_plot)
+
+# print(Tree_scatter_plot)
+print(Time_ratio_plot)
+print(Age_ratio_plot)
 
 # Timing ####
 

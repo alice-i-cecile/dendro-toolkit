@@ -43,7 +43,7 @@ make_standardization_plots <- function(effects, data, link="log"){
   
   # Residuals
   residual_density_plot <- make_residual_density_plot(data$residuals, link)
-  plots <- c(plots, residual_density_plot=residual_density_plot)
+  plots <- c(plots, list(residual_density_plot=residual_density_plot))
   
   # Return all plots as a list
   return (plots)
@@ -120,6 +120,11 @@ make_effect_density_plot <- function(effects, effect_name, link){
   # Add pdf information
   my_plot <- my_plot + geom_area(data=pdf_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
   
+  # Change x scale to match link
+  if (link=="log"){
+    my_plot <- my_plot + scale_x_log10()
+  }
+  
   return(my_plot)
 }
 
@@ -154,10 +159,9 @@ make_residual_density_plot <- function(residuals, link){
   
   # Load data into a data frame
   resid <- residuals$Growth[!is.na(residuals$Growth)]
-  df <- data.frame(residuals=resid)
   
   # Make the base graphic
-  my_plot <- ggplot(df, aes(x=residuals)) + theme_bw() + ylab("Density estimate") + xlab("Residuals") + geom_density(colour="red", fill="red", alpha=0.5)
+  my_plot <- ggplot(data.frame(residuals=resid), aes(x=residuals)) + theme_bw() + ylab("Density estimate") + xlab("Residuals") + geom_density(colour="red", fill="red", alpha=0.5)
   
   # Estimate idealized PDF
   x_min <- min(min(resid), 0)
@@ -176,6 +180,11 @@ make_residual_density_plot <- function(residuals, link){
   
   # Add pdf information
   my_plot <- my_plot + geom_area(data=pdf_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
+  
+  # Change x scale to match link
+  if (link=="log"){
+    my_plot <- my_plot + scale_x_log10()
+  }
   
   return(my_plot)
 }
