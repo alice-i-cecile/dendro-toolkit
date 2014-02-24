@@ -9,7 +9,7 @@
 standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="alternate", post_hoc=TRUE, return_data=FALSE, make_plots=TRUE, ...)
 {
   
-  # Exception handling ####
+  # Exception handling
   if (ifelse(is.data.frame(tra), sum(tra$G <= 0), sum(tra[tra<=0], na.rm=TRUE) > 0))
   {
     # Raise a warning if negative values found for multiplicative models
@@ -18,21 +18,9 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="alte
       stop("Zero or negative values cannot be use. Estimated effects will not be stable.")
     }
   }  
-
-  # Model fitting
-  if (optim=="mle")
-  {
-    effects <- standardize_mle(tra, model, link, ...)
-  } else if (optim=="rss")
-  {
-    effects <- standardize_rss(tra, model, link, ...)
-  }
-  # TODO
-  #else if(optim == "glm")
-  #{
-  #  effects <- standardize_glm(tra, model, link, ...)
-  #}
-  else if(optim == "alternate")
+  
+  # Fitting the model
+  if(optim == "alternate")
   {
     effects <- standardize_alternate(tra, model, link, ...)
   }
@@ -40,6 +28,12 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="alte
   {
     effects <- standardize_sequential(tra, model, link, ...)
   }
+  # TODO
+  #else if(optim == "glm")
+  #{
+  #  effects <- standardize_glm(tra, model, link, ...)
+  #}
+ 
   else if(optim == "gam")
   {
     effects <- standardize_gam(tra, model, link, ...)

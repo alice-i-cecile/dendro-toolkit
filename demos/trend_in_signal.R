@@ -95,16 +95,12 @@ data(trend_in_signal_dataset)
 # Check optimizers on the complete data
 seq_1 <- standardize_tra(complete_tra, optim="sequential")
 alt_1 <- standardize_tra(complete_tra, optim="alternate")
-mle_1 <- standardize_tra(complete_tra, optim="mle")
-rss_1 <- standardize_tra(complete_tra, optim="rss")
 glm_1 <- standardize_tra(complete_tra, optim="glm")
 gam_1 <- standardize_tra(complete_tra, optim="gam")
 
 # Check optimizers on the random incomplete data
 seq_2 <- standardize_tra(random_incomplete_tra, optim="sequential")
 alt_2 <- standardize_tra(random_incomplete_tra, optim="alternate")
-mle_2 <- standardize_tra(random_incomplete_tra, optim="mle")
-rss_2 <- standardize_tra(random_incomplete_tra, optim="rss")
 glm_2 <- standardize_tra(random_incomplete_tra, optim="glm")
 gam_2 <- standardize_tra(random_incomplete_tra, optim="gam")
 
@@ -121,24 +117,18 @@ gam_3 <- standardize_tra(realistic_incomplete_tra, optim="gam")
 # Check optimizers on the complete data
 system.time(standardize_tra(complete_tra, optim="sequential", make_plot=FALSE))
 system.time(standardize_tra(complete_tra, optim="alternate", make_plot=FALSE))
-system.time(standardize_tra(complete_tra, optim="mle", make_plot=FALSE))
-system.time(standardize_tra(complete_tra, optim="rss", make_plot=FALSE))
 system.time(standardize_tra(complete_tra, optim="glm", make_plot=FALSE))
 system.time(standardize_tra(complete_tra, optim="gam", make_plot=FALSE))
 
 # Check optimizers on the random incomplete data
 system.time(standardize_tra(random_incomplete_tra, optim="sequential", make_plot=FALSE))
 system.time(standardize_tra(random_incomplete_tra, optim="alternate", make_plot=FALSE))
-system.time(standardize_tra(random_incomplete_tra, optim="mle", make_plot=FALSE))
-system.time(standardize_tra(random_incomplete_tra, optim="rss", make_plot=FALSE))
 system.time(standardize_tra(random_incomplete_tra, optim="glm", make_plot=FALSE))
 system.time(standardize_tra(random_incomplete_tra, optim="gam", make_plot=FALSE))
 
 # Check optimizers on the random realistic data
 system.time(standardize_tra(realistic_incomplete_tra, optim="sequential", make_plot=FALSE))
 system.time(standardize_tra(realistic_incomplete_tra, optim="alternate", make_plot=FALSE))
-system.time(standardize_tra(realistic_incomplete_tra, optim="mle", make_plot=FALSE))
-system.time(standardize_tra(realistic_incomplete_tra, optim="rss", make_plot=FALSE))
 system.time(standardize_tra(realistic_incomplete_tra, optim="glm", make_plot=FALSE))
 system.time(standardize_tra(realistic_incomplete_tra, optim="gam", make_plot=FALSE))
 
