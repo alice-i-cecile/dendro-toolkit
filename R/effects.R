@@ -1,15 +1,15 @@
 # Estimating and removing effects ####
 
 # Naive estimate of a single effect (analagous to constructing regional curve or standardized chronology)
-est_effect <- function (tra, id, mean_type="arithmetic")
+est_effect <- function (tra, id, link)
 {  
 
   # Estimate effect using averages (crude method of moments)
   estimate_effect <- function(id_i)
   {
-    data <- tra[tra[[id]]==id_i, "G"]
-    if (mean_type=="geometric"){
-      est_effect <- geomMean(data) 
+    data <- tra[tra[[id]]==id_i, "Growth"]
+    if (link=="log"){
+      est_effect <- geomMean(data)
     } else {
       est_effect <- mean(data, na.rm=TRUE)
     }
@@ -57,10 +57,12 @@ sort_effects <- function(effects, tra)
     # Sort time and age by ascending time
     # Other variables are just sorted alphabetically
     if (i == "Time" | i == "Age"){
-      effect_names <- as.numeric(as.character(effect_names))
+      index_order <- as.character(sort(as.numeric(as.character(effect_names))))
+    } else {
+      index_order <- sort(effect_names)
     }
     
-    sorted_effects[[i]] <- effects[[i]][sort(effect_names)]
+    sorted_effects[[i]] <- effects[[i]][index_order]
     
   }
       

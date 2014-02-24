@@ -8,7 +8,7 @@ model_fit_tra <- function(effects, tra, model, link, method="alternate", k=NA)
   fit <- list()
   
   # Need to compute appropriate model fit stats for null models
-  if (sum(unlist(model))==0)
+  if (length(model)==0)
   {
     # Predictions of the null model are the null value
     fit$predicted <- tra
@@ -25,7 +25,7 @@ model_fit_tra <- function(effects, tra, model, link, method="alternate", k=NA)
     fit$residuals <- tra
     
   } else {
-    fit$predicted <- predicted_tra(effects, tra, link)
+    fit$predicted <- predicted_tra(effects, tra, model, link)
     fit$residuals <- residuals_tra (tra, fit$predicted, link)
   }
   
@@ -53,7 +53,7 @@ model_fit_tra <- function(effects, tra, model, link, method="alternate", k=NA)
 }
 
 # Predicted values
-predicted_tra <- function (effects, tra, link)
+predicted_tra <- function (effects, tra, model, link)
 {
   
   # Set starting values to null value
@@ -132,7 +132,7 @@ k_tra <- function (tra, model)
   }
   
   # Inlinkation about some parameters is lost due to rescaling (dummy variable trap)
-  num_effects <- sum(unlist(model))
+  num_effects <- length(model)
   
   k <- ifelse (num_effects > 0, k - (num_effects-1), 0)
   

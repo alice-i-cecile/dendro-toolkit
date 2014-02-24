@@ -27,14 +27,14 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_
   for (i in model){
     dim_i <- nlevels(tra[[i]])
     
-    if (form=="additive")
-    {
-      effects[[i]] <-  rep.int(0,  dim_i)
-    } else
+    if (link=="log")
     {
       effects[[i]] <-  rep.int(1,  dim_i)
+    } else
+    {
+      effects[[i]] <-  rep.int(0,  dim_i)
     }
-
+    
     names(effects[[i]]) <- levels(tra[[i]])
   }
   

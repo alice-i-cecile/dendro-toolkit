@@ -20,9 +20,9 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="sfs"
   }  
 
   # Model fitting
-  if (optim=="likelihood")
+  if (optim=="mle")
   {
-    effects <- standardize_likelihood(tra, model, link, ...)
+    effects <- standardize_mle(tra, model, link, ...)
   }
   # TODO
   #else if(optim == "glm")
@@ -33,7 +33,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="sfs"
   {
     effects <- standardize_alternate(tra, model, link, ...)
   }
-  else if(optim == "rcs")
+  else if(optim == "sequential")
   {
     effects <- standardize_sequential(tra, model, link, ...)
   }
@@ -54,14 +54,18 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="sfs"
     }
   }
   
+  # Standardization complete
+  print("Standardization complete")
+  
   # Make sure elements of effects are in the right order
-  effects <- sort_effects(effects, tra, sparse)
+  effects <- sort_effects(effects, tra)
   
   # Rescale the effects to standard form
   effects <- rescale_effects(effects, link)
   
   # Compute model fit statistics
   fit <- model_fit_tra (effects, tra, model, link)
+  print("Model fit computed")  
   
   # Seperate predicted and residuals from fit data
   data <- list(original=tra, predicted=fit$predicted, residuals=fit$residuals)
@@ -72,6 +76,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="sfs"
       plots <- make_standardization_plots(effects, data, link)
   
       # Display the plots immediately
+      print("Plots constructed")        
       print(plots)
   }
   
@@ -79,7 +84,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="sfs"
   settings <- list(model=model, link=link, optim=optim)
                    
   # Compile and output all relevant information
-  out <- list(effects=effects, tra=tra, fit=fit, settings=settings)
+  out <- list(effects=effects, fit=fit, settings=settings)
   
   if (return_data){
     out <- c(out, list(data=data))
