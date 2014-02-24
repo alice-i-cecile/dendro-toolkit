@@ -2,7 +2,7 @@
 # Fits models using maximum likelihood
 # Searches for solutions with various optimizing algorithms
 
-standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG", report_optim=FALSE,  ...)
+standardize_rss <- function(tra, model=c("Time", "Age"), link="log", method="CG", report_optim=FALSE, ...)
 {
   
   # Create storage for the estimated effects
@@ -25,7 +25,7 @@ standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG"
   }
   
   # Likelihood function, optimize this!
-  fes_likelihood <- function(flat_effects)
+  fes_rss <- function(flat_effects)
   {
     effects <- relist(flat_effects, skeleton=effects_skeleton)
     
@@ -36,20 +36,19 @@ standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG"
     residuals <- residuals_tra(tra, predicted, link)
     
     # Find the likelihood
-    llh <- llh_tra(residuals, link)
+    rss <- rss_tra(residuals, link)
     
     # Use the negative likelihood because optim() is a minimizer
-    return(-llh)
+    return(rss)
   }
   
   # Optimize the model
-  mle_solution <- optim(unlist(effects_skeleton), fes_likelihood, method, ...)
+  mle_solution <- optim(unlist(effects_skeleton), fes_rss, method, ...)
   
   # Report the optimizer's output
   if (report_optim){
     print(mle_solution[2:5])
-  }
-  
+  }  
   # Extract and return effects
   effects <- relist(mle_solution$par, effects_skeleton)
   

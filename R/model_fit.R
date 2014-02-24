@@ -192,16 +192,14 @@ llh_tra <- function (residuals, link)
   
   sigma <- sigma_tra(residuals, link)
   
-  val <- residuals$Growth
-  
   # Likelihood is proportional to the probability of observing the data, given the parameters
   if(link=="identity")
   {
-    llh <- sum(dnorm(val, sd=sigma, log=TRUE))
+    llh <- sum(dnorm(residuals$Growth, sd=sigma, log=TRUE))
   }
   else
   {
-    llh <- sum(dlnorm(val, sd=sigma, log=TRUE))
+    llh <- sum(dlnorm(residuals$Growth, sdlog=sigma, log=TRUE))
   }
   
   return(llh)
