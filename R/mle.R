@@ -6,8 +6,8 @@ standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG"
 {
   
   # Create storage for the estimated effects
-  effects0 <- vector(mode="list", length=length(model))
-  names(effects0) <- model
+  effects_skeleton <- vector(mode="list", length=length(model))
+  names(effects_skeleton) <- model
   
   # Dummy starting effects
   for (i in model){
@@ -15,36 +15,41 @@ standardize_mle <- function(tra, model=c("Time", "Age"), link="log", method="CG"
     
     if (link=="log")
     {
-      effects[[i]] <-  rep.int(1,  dim_i)
+      effects_skeleton[[i]] <-  rep.int(1,  dim_i)
     } else
     {
-      effects[[i]] <-  rep.int(0,  dim_i)
+      effects_skeleton[[i]] <-  rep.int(0,  dim_i)
     }
     
-    names(effects[[i]]) <- levels(tra[[i]])
+    names(effects_skeleton[[i]]) <- levels(tra[[i]])
   }
   
   # Likelihood function, optimize this!
-  fes_likelihood <- function(effects)
+  fes_likelihood <- function(flat_effects)
   {
+    effects <- relist(flat_effects, skeleton=effects_skeleton)
+    
     # Find the predicted values
-    predicted <- predicted_tra(effects, tra, link)
+    predicted <- predicted_tra(effects, tra, model, link)
     
     # Find the residuals
     residuals <- residuals_tra(tra, predicted, link)
     
     # Find the likelihood
-    llh <- llh_tra(residuals, error)
+    llh <- llh_tra(residuals, link)
     
-    return(llh)
+    # Use the negative likelihood because optim() is a minimizer
+    return(-llh)
   }
   
   # Optimize the model
-  # Use the negative likelihood because optim() is a minimizer
-  mle_solution <- optim(effects0, -fes_likelihood, method, ...)
+  mle_solution <- optim(unlist(effects_skeleton), fes_likelihood, method, ...)
   
   # Report the optimizer's output
   print(mle_solution[2:5])
-    
+  
+  # Extract and return effects
+  effects <- relist(mle_solution$par, effects_skeleton)
+  
   return(effects)
 }
