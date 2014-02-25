@@ -6,7 +6,7 @@
 # post_hoc: apply a post-hoc correction to reduce instability in 3-effect models
 # ...: further arguments to control model fitting in optimization algorithm
 
-standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="alternate", post_hoc=TRUE, return_data=FALSE, make_plots=TRUE, ...)
+standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="glm", post_hoc=TRUE, return_data=FALSE, make_plots=TRUE, ...)
 {
   
   # Exception handling
