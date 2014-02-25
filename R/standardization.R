@@ -28,11 +28,10 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", optim="alte
   {
     effects <- standardize_sequential(tra, model, link, ...)
   }
-  # TODO
-  #else if(optim == "glm")
-  #{
-  #  effects <- standardize_glm(tra, model, link, ...)
-  #}
+  else if(optim == "glm")
+  {
+   effects <- standardize_glm(tra, model, link, ...)
+  }
  
   else if(optim == "gam")
   {

@@ -57,12 +57,12 @@ sort_effects <- function(effects, tra)
     # Sort time and age by ascending time
     # Other variables are just sorted alphabetically
     if (i == "Time" | i == "Age"){
-      index_order <- as.character(sort(as.numeric(as.character(effect_names))))
+      ordered_names <- as.character(sort(as.numeric(as.character(effect_names))))
     } else {
-      index_order <- sort(effect_names)
+      ordered_names <- sort(effect_names)
     }
     
-    sorted_effects[[i]] <- effects[[i]][index_order]
+    sorted_effects[[i]] <- effects[[i]][ordered_names]
     
   }
       

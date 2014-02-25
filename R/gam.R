@@ -1,7 +1,7 @@
 # GAM fixed effects standardization ####
 
-# Main gam function
-standardize_gam <- function (tra, model=c("Time", "Age"), link="log", sparse=TRUE, age_k=10, ...)
+# Main GLM function
+standardize_gam <- function (tra, model=c("Time", "Age"), link="log", ...)
 {
   
   # Clean age info to ensure numeric form
@@ -10,68 +10,32 @@ standardize_gam <- function (tra, model=c("Time", "Age"), link="log", sparse=TRU
   # Construct formula for regression
   growth_formula <- as.formula(make_gam_formula(model))
   
-  # max_k determines the maximum flexibility of the spline fitting the age effect
-  # Increased max_k greatly increases computation time
-  # Absolute maximum flexibility is:
-  # max_k <- nlevels(tra$Age)
-  
-  print ("Model initialized.")
+  print ("Using a generalized additive model used to standardize data")
+  print (paste("Gaussian family, link is set to", link))
   print (growth_formula)
   
-  # Set family to use appropriate link
-  if (link=="identity")
-  {
-    family <- gaussian(link="identity")
-  }
-  
-  # If form is multiplicative and error is multiplicative log-normal:  
-  # Use GAM regression with a log-link
-  else if (link=="log")
-  {
-    # More correct. TODO
-    #family <- gaussian(link="log")
-    # Log transformed response variable hack
-    # Breaks gam-estimated AIC
-    tra$Growth <- log(tra$Growth)
-    family <- gaussian(link="identity")
-  }
+  # Set family to use appropriate link function
+  family <- gaussian(link=link)
   
   # Estimate the growth model
   growth_model <- gam(growth_formula, family=family, data=tra, ...)
-  print ("Generalized additive model used to standardize data.")
   
   # Extract estimates of the effect
   # Correct way
-  #effects <- extract_effects_gam(growth_model, model, form, tra)
-  
-  # Log-transformation hack
-  effects <- extract_effects_gam(growth_model, model, link=="log", tra)
-  if (form=="multiplicative")
-  {
-    effects <- lapply(effects, exp)
-    tra$Growth <- exp(tra$Growth)
-  }
-  print ("Effects extracted.")
+  effects <- extract_effects_gam(growth_model, model, link, tra)
   
   return (effects)
   
 }
 
 # Formula construction for GAM standardization
-make_gam_formula <- function (model){
-  dep.str <- "G"
-  ind.str <- "0"
+make_gam_formula <- function (model)
+{
+  dep.str <- "Growth"
   
-  if("Tree" %in% model){
-    ind.str <- paste(ind.str, "Tree", sep="+")
-  }
-  if("Time" %in% model){
-    ind.str <- paste(ind.str, "Time", sep="+")
-  }
-  if("Age" %in% model){
-    # Change smoothing terms here
-    ind.str <- paste(ind.str, "s(Age), k=age_k, ...)", sep="+")
-  }
+  ind_effects <- c("0", model)
+  ind_effects <- str_replace(ind_effects, "Age", "s(Age, ...)")
+  ind.str <- Reduce(function(...){paste(..., sep="+")}, ind_effects)
   
   # Combine the two sides of the formula
   formula.str <- paste(dep.str, ind.str, sep="~")
@@ -79,54 +43,72 @@ make_gam_formula <- function (model){
   return (formula.str)
 }
 
-# Extracting effects for gam models
+
+# Extracting effects for glm models
 extract_effects_gam <- function(growth_model, model, link, tra)
 {
+  # Reset age index to factor
+  tra$Age <- as.factor(tra$Age)
   
-  # Extract coefficients for I and T directly
-  raw_effects <- growth_model$coefficients
+  # Skeleton effects for relisting coefficients
+  skeleton_effects <- vector(mode="list", length=length(model))
+  names(skeleton_effects) <- model
   
-  effects <- list()
-  effects$Timeree <- raw_effects[substr(names(raw_effects), 1, 1)=="Tree"]
-  effects$Timeime <- raw_effects[substr(names(raw_effects), 1, 1)=="Time"]
-  
-  names(effects$Timeree) <- substr(names(effects$Tree), 2, length(names(effects$Timeree)))
-  names(effects$Timeime) <- substr(names(effects$Time), 2, length(names(effects$Timeime)))
-  
-  # Find A by process of elimination
-  # Generate predicted values
-  dummy_data <- data.frame(Tree=levels(tra$Tree)[2], Time=levels(tra$Time)[2], Age=levels(tra$Agege))
-  predicted_by_age <- predict(growth_model, dummy_data)
-  
-  # Remove the known effects of time and individuals
-  # Convoluted partial matching code to handle variable name truncation
-  if (form=="additive")
-  {
-    base_line <- 0
-    if ("Tree" %in% model)
-    {
-      base_line <- base_line + effects$Tree[which(!is.na(pmatch(names(effects$Tree), levels(tra$Tree)[2])))]
-    }
-    if ("Time" %in% model)
-    {
-      base_line <- base_line + effects$Time[which(!is.na(pmatch(names(effects$Time), levels(tra$t)[2])))]
-    }
-    effects$Age <- predicted_by_age - base_line
-  } else 
-  {
-    base_line <- 1
-    if ("Tree" %in% model)
-    {
-      base_line <- base_line * effects$Tree[which(!is.na(pmatch(names(effects$Tree), levels(tra$Tree)[2])))]
-    }
-    if ("Time" %in% model)
-    {
-      base_line <- base_line * effects$Time[which(!is.na(pmatch(names(effects$Time), levels(tra$t)[2])))]
-    }
-    effects$Age <- predicted_by_age / base_line
+  for (i in model){
+    dim_i <- nlevels(tra[[i]])
+    skeleton_effects[[i]] <-  rep.int(NA,  dim_i)
+    names(skeleton_effects[[i]]) <- levels(tra[[i]])
   }
   
-  names(effects$Age) <- levels(tra$Age)
+  # Grab the coefficients from the regression model
+  effect_coef <- coef(growth_model)
+  
+  # Fix the names
+  for (key_phrase in model){
+    names(effect_coef) <- str_replace(names(effect_coef), key_phrase, paste0(key_phrase, "."))
+  }
+  
+  # Put the coefficients into a list of the appropriate size
+  boneless_effects <- unlist(skeleton_effects)
+  matching_effect_names <- intersect(names(effect_coef), names(boneless_effects))
+  
+  for (n in matching_effect_names){
+    boneless_effects[n] <- effect_coef[n]
+  }
+  
+  # Missing effects are set to base levels
+  # Returned invisibly by regression
+  boneless_effects[is.na(boneless_effects)] <- 0
+  
+  # Fix structure of effects
+  effects <- relist(boneless_effects, skeleton_effects)
+  
+  # Add in effects for age
+  if ("Age" %in% model)
+  {
+    # Find estimates of effect by comparing predictions to predictions from other variables
+    Tree_index <- levels(tra$Tree)[1]
+    Time_index <- levels(tra$Time)[1]
+    Age_levels <- as.numeric(levels(tra$Age))
+    
+    dummy_data <- data.frame(Tree=Tree_index, Time=Time_index, Age=Age_levels)
+    predicted_by_age <- predict(growth_model, dummy_data)
+    names(predicted_by_age) <- Age_levels
+    
+    # Predictions - other effects = age effect
+    baseline <- 0
+    if ("Tree" %in% model){
+      base_Tree <- effect_coef[paste("Tree", Tree_index, sep=".")]
+      baseline <- baseline + base_Tree    }    
+    if ("Time" %in% model){
+      base_Time <- effect_coef[paste("Time", Time_index, sep=".")]
+      baseline <- baseline + base_Time
+    }      
+    
+    effects$Age <- predicted_by_age - baseline
+    
+  }
   
   return(effects)
+  
 }
