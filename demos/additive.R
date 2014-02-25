@@ -198,7 +198,7 @@ Age_raw_plot <- ggplot(Age_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(
 
 Time_diff_plot <- ggplot(Time_df_diff, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Year") + ylab("Difference between estimated and true effect") + geom_hline(y=0)
 
-Age_diff_plot <- ggplot(Age_df_diff, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Difference between estimated and true effect")
+Age_diff_plot <- ggplot(Age_df_diff, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Difference between estimated and true effect") + geom_hline(y=0)
 
 # Printing
 # print(Tree_raw_plot)

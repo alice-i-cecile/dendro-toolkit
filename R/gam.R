@@ -109,6 +109,11 @@ extract_effects_gam <- function(growth_model, model, link, tra)
     
   }
   
+  # Account for link
+  if (link=="log"){
+    effects <- lapply(effects, exp)
+  }
+  
   return(effects)
   
 }

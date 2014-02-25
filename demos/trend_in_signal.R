@@ -107,10 +107,9 @@ gam_2 <- standardize_tra(random_incomplete_tra, optim="gam")
 # Check optimizers on the random realistic data
 seq_3 <- standardize_tra(realistic_incomplete_tra, optim="sequential")
 alt_3 <- standardize_tra(realistic_incomplete_tra, optim="alternate")
-mle_3 <- standardize_tra(realistic_incomplete_tra, optim="mle")
-rss_3 <- standardize_tra(realistic_incomplete_tra, optim="rss")
 glm_3 <- standardize_tra(realistic_incomplete_tra, optim="glm")
 gam_3 <- standardize_tra(realistic_incomplete_tra, optim="gam")
+
 # Model fit ####
 model_fit_1 <- data.frame(seq=unlist(seq_1$fit),
                           alt=unlist(alt_1$fit),
@@ -153,7 +152,7 @@ Age_id <- rep(names(true_effects$Age), times=length(model_list))
 
 Time_1 <- data.frame(effect=c(true_effects$Time, seq_1$effects$Time, alt_1$effects$Time, glm_1$effects$Time, gam_1$effects$Time), model=Time_model, id=Time_id, case=1)
 
-Age_1 <- data.frame(effect=c(true_effects$effects$Age, seq_1$effects$Age, alt_1$effects$Age, glm_1$effects$Age, gam_1$effects$Age), model=Age_model, id=Age_id, case=1)
+Age_1 <- data.frame(effect=c(true_effects$Age, seq_1$effects$Age, alt_1$effects$Age, glm_1$effects$Age, gam_1$effects$Age), model=Age_model, id=Age_id, case=1)
 
 # Case 2
 # Tree_2 <- data.frame(effect=c(true_effects$Tree, seq_2$effects$Tree, alt_2$effects$Tree, glm_2$effects$Tree, gam_2$effects$Tree), model=Tree_model, id=Tree_id, case=2)
@@ -181,15 +180,15 @@ Age_df$id <- as.numeric(as.character(Age_df$id))
 Time_df_ratio <- Time_df[-which(Time_df$model=="True"),]
 Age_df_ratio <- Age_df[-which(Age_df$model=="True"),]
 
-Time_df_ratio$effect <- Time_df_ratio$effect - true_effects$Time
-Age_df_ratio$effect <- Age_df_ratio$effect - true_effects$Age
+Time_df_ratio$effect <- Time_df_ratio$effect / true_effects$Time
+Age_df_ratio$effect <- Age_df_ratio$effect / true_effects$Age
 
 # Summary plots ####
 
 # Raw effects
 # Tree_raw_plot <- ggplot(Tree_df, aes(x=id, y=effect)) + geom_bar(stat="identity")  + facet_grid(case~model) + theme_bw() + xlab("Tree") + ylab("Effect")
 
-Time_raw_plot <- ggplot(Time_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Year") + ylab("Effect") + hline()
+Time_raw_plot <- ggplot(Time_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Year") + ylab("Effect") + geom_hline(y=1)
 
 Age_raw_plot <- ggplot(Age_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Effect")
 
@@ -198,7 +197,7 @@ Age_raw_plot <- ggplot(Age_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(
 
 Time_ratio_plot <- ggplot(Time_df_ratio, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Year") + ylab("Ratio between estimated and true effect") + geom_hline(y=1)
 
-Age_ratio_plot <- ggplot(Age_df_ratio, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Ratio between estimated and true effect")
+Age_ratio_plot <- ggplot(Age_df_ratio, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Ratio between estimated and true effect") + geom_hline(y=1)
 
 # Printing
 # print(Tree_raw_plot)

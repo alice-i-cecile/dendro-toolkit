@@ -74,6 +74,11 @@ extract_effects_glm <- function(growth_model, model, link, tra)
   # Fix structure of effects
   effects <- relist(boneless_effects, skeleton_effects)
   
+  # Account for link
+  if (link=="log"){
+    effects <- lapply(effects, exp)
+  }
+  
   return(effects)
     
 }

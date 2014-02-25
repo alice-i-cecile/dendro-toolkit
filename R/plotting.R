@@ -120,11 +120,6 @@ make_effect_density_plot <- function(effects, effect_name, link){
   # Add pdf information
   my_plot <- my_plot + geom_area(data=pdf_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
   
-  # Change x scale to match link
-  if (link=="log"){
-    my_plot <- my_plot + scale_x_log10()
-  }
-  
   return(my_plot)
 }
 
@@ -180,11 +175,6 @@ make_residual_density_plot <- function(residuals, link){
   
   # Add pdf information
   my_plot <- my_plot + geom_area(data=pdf_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
-  
-  # Change x scale to match link
-  if (link=="log"){
-    my_plot <- my_plot + scale_x_log10()
-  }
-  
+
   return(my_plot)
 }
