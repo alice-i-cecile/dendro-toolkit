@@ -114,4 +114,34 @@ rescale_effects <- function (effects, link="log")
   }
   
   return (effects)
-} 
+}
+
+# Crude estimation of standard errors for each effect ####
+est_se <- function(residuals, model, link="log", dep_var){
+  
+  # Method of moments confidence intervals
+  # Compute classic standard errors for each effect
+  mom_se <- function(x){
+    se <- sd(x, na.rm=TRUE)/length(x[!is.na(z)])
+    return(se)
+  }
+  
+  grab_res <- function(e, E){
+    residuals[residuals[[E]]==e, dep_var]
+  }
+  
+  effect_se <- function(E)
+  {
+    e_list <- levels(residuals[[E]])
+    res_list <- lapply(e_list, grab_res)
+    se_list <- lapply(res_list, mom_se)
+    return(se)
+  }
+  
+  all_se <- lapply(model, function(E){sapply(E, effect_se)})
+  
+  # Sort so names line up
+  all_se <- sort_effects(all_se, residuals)
+  
+  return(all_se)
+}
