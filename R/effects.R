@@ -1,13 +1,13 @@
 # Estimating and removing effects ####
 
 # Naive estimate of a single effect (analagous to constructing regional curve or standardized chronology)
-est_effect <- function (tra, id, link)
+est_effect <- function (tra, id, link, dep_var="Growth")
 {  
 
   # Estimate effect using averages (crude method of moments)
   estimate_effect <- function(id_i)
   {
-    data <- tra[tra[[id]]==id_i, "Growth"]
+    data <- tra[tra[[id]]==id_i, dep_var]
     if (link=="log"){
       est_effect <- geomMean(data)
     } else {
@@ -22,7 +22,7 @@ est_effect <- function (tra, id, link)
 }
 
 # Remove an effect from a tree ring array
-remove_effect <- function (tra, effect, id, link="log")
+remove_effect <- function (tra, effect, id, link="log", dep_var="Growth")
 {
     
   removed_tra <- tra
@@ -32,11 +32,11 @@ remove_effect <- function (tra, effect, id, link="log")
     relevant_rows <- tra[[id]]==effect_id
     if (link=="identity")
     {
-      removed_tra[relevant_rows,"Growth"] <- removed_tra[relevant_rows,"Growth"] - effect[effect_id]
+      removed_tra[relevant_rows,"Growth"] <- removed_tra[relevant_rows, dep_var] - effect[effect_id]
     }
     else
     {
-      removed_tra[relevant_rows,"Growth"] <- removed_tra[relevant_rows,"Growth"] / effect[effect_id]
+      removed_tra[relevant_rows,"Growth"] <- removed_tra[relevant_rows, dep_var] / effect[effect_id]
     }
   }
   

@@ -1,11 +1,11 @@
 # GLM fixed effects standardization ####
 
 # Main GLM function
-standardize_glm <- function (tra, model=c("Time", "Age"), link="log", ...)
+standardize_glm <- function (tra, model=c("Time", "Age"), link="log", dep_var="Growth", ...)
 {
   
   # Construct formula for regression
-  growth_formula <- as.formula(make_glm_formula(model))
+  growth_formula <- as.formula(make_glm_formula(model, dep_var))
   
   print ("Using a generalized linear model used to standardize data")
   print (paste("Gaussian family, link is set to", link))
@@ -26,15 +26,15 @@ standardize_glm <- function (tra, model=c("Time", "Age"), link="log", ...)
 }
 
 # Formula construction for GAM standardization
-make_glm_formula <- function (model)
+make_glm_formula <- function (model, dep_var)
 {
-  dep.str <- "Growth"
-  ind.str <- Reduce(function(...){paste(..., sep="+")}, c("0", model))
+  dep_str <- dep_var
+  ind_str <- Reduce(function(...){paste(..., sep="+")}, c("0", model))
   
   # Combine the two sides of the formula
-  formula.str <- paste(dep.str, ind.str, sep="~")
+  formula_str <- paste(dep_str, ind_str, sep="~")
   
-  return (formula.str)
+  return (formula_str)
 }
 
 

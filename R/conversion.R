@@ -16,7 +16,7 @@ getEndpoints <- function (series, side="start"){
 
 # Go directly from a rwl to tra
 # Avoid unnecessary memory bottlenecks
-rwl_to_tra <- function (rwl, birth_years=NULL)
+rwl_to_tra <- function (rwl, birth_years=NULL, dep_var="Growth")
 {
   if (is.null(birth_years)){
     # Determine birth for each tree
@@ -79,7 +79,7 @@ rwl_to_tra <- function (rwl, birth_years=NULL)
   # Final formatting
   tra <- data.frame(matrix(unlist(raw_tra),ncol=4, byrow=TRUE))
   names(tra) <- c("Growth", "Tree", "Year", "Age")
-  tra$Growth <- as.numeric(tra$Growth)
+  tra[[dep_var]] <- as.numeric(tra[[dep_var]])
   
   return(tra)
   
@@ -88,7 +88,7 @@ rwl_to_tra <- function (rwl, birth_years=NULL)
 # TRA to RWL ####
 
 # Often loses information about age, sometimes metadata
-tra_to_rwl <- function(tra, data_column="Growth")
+tra_to_rwl <- function(tra, dep_var="Growth")
 {
   # Create the base table
   tree_names <- unique(tra$Tree)
@@ -113,7 +113,7 @@ tra_to_rwl <- function(tra, data_column="Growth")
     year_index <- which(rownames(rwl)==year)
       
     # Convert growth data
-    rwl[year_index, tree_index] <- tra[i, data_column]
+    rwl[year_index, tree_index] <- tra[i, dep_var]
   }
   
   return(rwl)

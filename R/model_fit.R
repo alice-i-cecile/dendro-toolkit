@@ -2,7 +2,7 @@
 # Model fit statistics ####
 
 # Compute all the relevant model fit statistics for fixed-effects standardization
-model_fit_tra <- function(effects, tra, model, link, method="alternate", k=NA)
+model_fit_tra <- function(effects, tra, model, link, dep_var, optim, k=NA)
 {
   
   fit <- list()
@@ -15,32 +15,32 @@ model_fit_tra <- function(effects, tra, model, link, method="alternate", k=NA)
     
     if (link=="identity")
     {
-      fit$predicted$Growth <- 0
+      fit$predicted[[dep_var]] <- 0
     } else
     {
-      fit$predicted$Growth <- 1
+      fit$predicted[[dep_var]] <- 1
     }
     
     # Residuals of the null model are the observed data
     fit$residuals <- tra
     
   } else {
-    fit$predicted <- predicted_tra(effects, tra, model, link)
-    fit$residuals <- residuals_tra (tra, fit$predicted, link)
+    fit$predicted <- predicted_tra(effects, tra, model, link, dep_var)
+    fit$residuals <- residuals_tra (tra, fit$predicted, link, dep_var)
   }
   
   fit$n <- n_tra(tra)
-  if (method=="gam")
+  if (optim=="gam")
   {
     fit$k <- k
   } else{
     fit$k <- k_tra(tra, model)
   }
-  fit$sigma <- sigma_tra(fit$residuals, link)
+  fit$sigma <- sigma_tra(fit$residuals, link, dep_var)
   
-  fit$tss <- tss_tra(tra, link)
-  fit$rss <- rss_tra(fit$residuals, link)
-  fit$llh <- llh_tra(fit$residuals, link)
+  fit$tss <- tss_tra(tra, link, dep_var)
+  fit$rss <- rss_tra(fit$residuals, link, dep_var)
+  fit$llh <- llh_tra(fit$residuals, link, dep_var)
   
   fit$Rsq <- Rsq_tra(fit$rss, fit$tss)
   fit$Adj.Rsq <- adj.Rsq_tra(fit$rss, fit$tss, fit$n, fit$k)
@@ -53,16 +53,16 @@ model_fit_tra <- function(effects, tra, model, link, method="alternate", k=NA)
 }
 
 # Predicted values
-predicted_tra <- function (effects, tra, model, link)
+predicted_tra <- function (effects, tra, model, link, dep_var)
 {
   
   # Set starting values to null value
   predicted <- tra
-  predicted$Growth <- 0
+  predicted[[dep_var]] <- 0
   
-  # Transform growth data according to link function
+  # Transform data according to link function
   if(link=="log"){
-    tra$Growth <- log(tra$Growth)
+    tra[[dep_var]] <- log(tra[[dep_var]])
   }
   
   # Add effects on 1 at a time
@@ -72,30 +72,30 @@ predicted_tra <- function (effects, tra, model, link)
     {
       i <- as.character(tra[r, e])
       
-      predicted[r, "Growth"] <- predicted[r, "Growth"] + effects[[e]][i]
+      predicted[r, dep_var] <- predicted[r, dep_var] + effects[[e]][i]
     }
   }
   
-  # Untransform growth data
+  # Untransform data
   if(link=="log"){
-    predicted$Growth <- exp(predicted$Growth)
+    predicted[[dep_var]] <- exp(predicted[[dep_var]])
   }
   
   return(predicted)
 }
 
 # Residuals
-residuals_tra <- function (tra, predicted, link)
+residuals_tra <- function (tra, predicted, link, dep_var)
 {
   residuals <- tra
   
   if (link=="identity")
   {
-    residuals$Growth <- tra$Growth - predicted$Growth
+    residuals[[dep_var]] <- tra[[dep_var]] - predicted[[dep_var]]
   }
   else
   {
-    residuals$Growth <- tra$Growth / predicted$Growth
+    residuals[[dep_var]] <- tra[[dep_var]] / predicted[[dep_var]]
   }
   
   return (residuals)
@@ -141,10 +141,10 @@ k_tra <- function (tra, model)
 }
 
 # Calculate sigma, the level of dispersal in the noise PDF as the RMSE (the standard deviation of the residuals)
-sigma_tra <- function (residuals, link)
+sigma_tra <- function (residuals, link, dep_var)
 {
   
-  val <- residuals$Growth
+  val <- residuals[[dep_var]]
   if (link=="log")
   {
     val <- log(val)
@@ -157,9 +157,9 @@ sigma_tra <- function (residuals, link)
 }
 
 # Total sum of squares
-tss_tra <- function (tra, link)
+tss_tra <- function (tra, link, dep_var)
 {
-  val <- tra$Growth
+  val <- tra[[dep_var]]
   if (link=="log")
   {
     val <- log(val)
@@ -172,9 +172,9 @@ tss_tra <- function (tra, link)
 }
 
 # Residual sum of squares
-rss_tra <- function (residuals, link)
+rss_tra <- function (residuals, link, dep_var)
 {
-  val <- residuals$Growth
+  val <- residuals[[dep_var]]
   if (link=="log")
   {
     val <- log(val)
@@ -187,19 +187,19 @@ rss_tra <- function (residuals, link)
 }
 
 # Log-likelihood
-llh_tra <- function (residuals, link)
+llh_tra <- function (residuals, link, dep_var)
 {
   
-  sigma <- sigma_tra(residuals, link)
+  sigma <- sigma_tra(residuals, link, dep_var)
   
   # Likelihood is proportional to the probability of observing the data, given the parameters
   if(link=="identity")
   {
-    llh <- sum(dnorm(residuals$Growth, sd=sigma, log=TRUE))
+    llh <- sum(dnorm(residuals[[dep_var]], sd=sigma, log=TRUE))
   }
   else
   {
-    llh <- sum(dlnorm(residuals$Growth, sdlog=sigma, log=TRUE))
+    llh <- sum(dlnorm(residuals[[dep_var]], sdlog=sigma, log=TRUE))
   }
   
   return(llh)

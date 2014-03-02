@@ -1,7 +1,7 @@
 # Alternate optimization ####
 # Cleans up signal-free regional curve standardization algorithm and allows expansion to N dimensions
 
-standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_threshold=0.999999)
+standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", dep_var="Growth", cor_threshold=0.999999)
 {
   
   # Create storage for the estimated effects
@@ -47,10 +47,10 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_
     for (id in model){
       
       # Estimate the effects across each dimension
-      est_j <- est_effect(working_tra, id, link)
+      est_j <- est_effect(working_tra, id, link, dep_var)
       
       # Remove them from the signal-free data
-      working_tra <- remove_effect (working_tra, est_j, id, link)
+      working_tra <- remove_effect (working_tra, est_j, id, link, dep_var)
       
       # Combine them with previously determined effects for that dimension
       if (link == "identity")
@@ -64,9 +64,9 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), link="log", cor_
     
     # Check for convergence. Use the log-correlation if the error term is suspected to be multiplicative lognormal    
     if (link=="identity"){
-      conv_cor <- cor(working_tra$Growth, last_tra$Growth)       
+      conv_cor <- cor(working_tra[[dep_var]], last_tra[[dep_var]])       
     } else {
-        conv_cor <- cor(log(working_tra$Growth), log(last_tra$Growth))
+        conv_cor <- cor(log(working_tra[[dep_var]]), log(last_tra[[dep_var]]))
     }
         
     if (conv_cor>=cor_threshold){

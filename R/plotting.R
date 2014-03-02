@@ -1,7 +1,7 @@
 # Automation and plots in bulk ####
 # Make all of the possible plots at once!
 
-make_standardization_plots <- function(effects, data, link="log"){
+make_standardization_plots <- function(effects, data, link="log", dep_var="Growth"){
   
   plots <- list()
   
@@ -42,7 +42,7 @@ make_standardization_plots <- function(effects, data, link="log"){
   }
   
   # Residuals
-  residual_density_plot <- make_residual_density_plot(data$residuals, link)
+  residual_density_plot <- make_residual_density_plot(data$residuals, link, dep_var)
   plots <- c(plots, list(residual_density_plot=residual_density_plot))
   
   # Return all plots as a list
@@ -150,10 +150,10 @@ make_tree_effect_year_plot <- function(effects, tra){
 # Residuals plotting ####
 
 # Do the residuals conform to our expectations of their density?
-make_residual_density_plot <- function(residuals, link){
+make_residual_density_plot <- function(residuals, link, dep_var="Growth"){
   
   # Load data into a data frame
-  resid <- residuals$Growth[!is.na(residuals$Growth)]
+  resid <- residuals[[dep_var]][!is.na(residuals[[dep_var]])]
   
   # Make the base graphic
   my_plot <- ggplot(data.frame(residuals=resid), aes(x=residuals)) + theme_bw() + ylab("Density estimate") + xlab("Residuals") + geom_density(colour="red", fill="red", alpha=0.5)
