@@ -6,7 +6,7 @@
 # post_hoc: apply a post-hoc correction to reduce instability in 3-effect models
 # ...: further arguments to control model fitting in optimization algorithm
 
-standardize_tra <- function(tra, model=c("Age", "Time"), link="log", dep_var="Growth", optim="glm", post_hoc=TRUE, return_data=FALSE, make_plots=TRUE, ...)
+standardize_tra <- function(tra, model=c("Age", "Time"), link="log", dep_var="Growth", optim="glm", ci_size=0.95, post_hoc=TRUE, return_data=FALSE, make_plots=TRUE, ...)
 {
   
   # Exception handling
@@ -54,22 +54,26 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", dep_var="Gr
   print("Standardization complete")
   
   # Make sure elements of effects are in the right order
-  effects <- sort_effects(effects, tra, dep_var)
+  effects <- sort_effects(effects, tra)
   
   # Rescale the effects to standard form
-  effects <- rescale_effects(effects, link, dep_var)
+  effects <- rescale_effects(effects, link)
   
   # Compute model fit statistics
-  fit <- model_fit_tra (effects, tra, model, link,  dep_var)
+  fit <- model_fit_tra (effects, tra, model, link, dep_var, optim)
   print("Model fit computed")  
   
+  # Compute standard errors of estimated coefficients
+  se <- est_se(fit$residuals, model, link, dep_var)
+  print("Standard errors of estimates computed")
+  
   # Seperate predicted and residuals from fit data
-  data <- list(original=tra, predicted=fit$predicted, residuals=fit$residuals)
+  dat <- list(original=tra, predicted=fit$predicted, residuals=fit$residuals)
   fit <- fit[-which(names(fit)=="predicted" | names(fit)=="residuals")]
   
   # Make plots if needed
   if (make_plots){
-      plots <- make_standardization_plots(effects, data, link, dep_var)
+      plots <- make_standardization_plots(effects, se, dat, link, dep_var, ci_size)
   
       # Display the plots immediately
       print("Plots constructed")        
@@ -80,10 +84,10 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", dep_var="Gr
   settings <- list(model=model, link=link, optim=optim,  dep_var=dep_var)
                    
   # Compile and output all relevant information
-  out <- list(effects=effects, fit=fit, settings=settings)
+  out <- list(effects=effects, se=se, fit=fit, settings=settings)
   
   if (return_data){
-    out <- c(out, list(data=data))
+    out <- c(out, list(dat=dat))
   }
   
   if(make_plots){
