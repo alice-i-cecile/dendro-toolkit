@@ -1,3 +1,26 @@
+# Truncate tree ring array to ensure minimum sample depth ####
+truncate_tra <- function(tra, min_depth=1, id="Time", group_by=NA)
+{
+  depth <- sample_depth_tra(tra, id, group_by)
+  
+  if (id %in% group_by){
+    trunc_tra <- tra
+    cname <- paste(id, "Group", sep="_")
+    valid_indices <- lapply(depth, function(x){names(x[x>=min_depth])})
+    
+    for (group in names(depth)){
+      trunc_tra <- trunc_tra[trunc_tra[[id]] %in% valid_indices & trunc_tra[[cname]]==group,]
+    }
+  } else {
+    valid_indices <- names(depth[depth>=min_depth])
+    
+    trunc_tra <- tra[tra[[id]] %in% valid_indices,]
+  }
+
+  return(trunc_tra)
+}
+  
+  
 # Geometric mean utility function ####
 geomMean <- function(x){
   if (length(x)==0){
