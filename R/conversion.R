@@ -78,7 +78,7 @@ rwl_to_tra <- function (rwl, birth_years=NULL, dep_var="Growth")
   
   # Final formatting
   tra <- data.frame(matrix(unlist(raw_tra),ncol=4, byrow=TRUE))
-  names(tra) <- c("Growth", "Tree", "Year", "Age")
+  names(tra) <- c(dep_var, "Tree", "Time", "Age")
   tra[[dep_var]] <- as.numeric(tra[[dep_var]])
   
   return(tra)
