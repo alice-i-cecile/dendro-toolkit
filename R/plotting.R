@@ -1,24 +1,24 @@
 # Automation and plots in bulk ####
 # Make all of the possible plots at once!
 
-make_standardization_plots <- function(effects, se=NULL, dat, link="log", dep_var="Growth", ci_size=0.95){
+make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA,link="log", dep_var="Growth", ci_size=0.95){
   
   plots <- list()
   
   # Sample depth
-  sample_depth_time_plot <- make_sample_depth_plot(dat$original, "Time")
-  sample_depth_age_plot <- make_sample_depth_plot(dat$original, "Age")
+  sample_depth_time_plot <- make_sample_depth_plot(dat$original, "Time", group_by)
+  sample_depth_age_plot <- make_sample_depth_plot(dat$original, "Age", group_by)
   
   plots <- c(plots, list(sample_depth_time_plot=sample_depth_time_plot, sample_depth_age_plot=sample_depth_age_plot))
   
   # Tree effect
   if ("Tree" %in% names(effects))
   {
-    tree_effect_plot <- make_effect_plot(effects, se, "Tree", link, ci_size)
-    tree_effect_density_plot <- make_effect_density_plot(effects, "Tree", link)
+    tree_effect_plot <- make_effect_plot(effects, se, "Tree", link, ci_size, group_by)
+    tree_effect_density_plot <- make_effect_density_plot(effects, "Tree", link, group_by)
     
-    tree_effect_age_plot <- make_tree_effect_age_plot (effects, se, dat$original, link, ci_size)
-    tree_effect_year_plot <- make_tree_effect_year_plot (effects, se, dat$original, link, ci_size)
+    tree_effect_age_plot <- make_tree_effect_age_plot(effects, se, dat$original, link, ci_size)
+    tree_effect_year_plot <- make_tree_effect_year_plot(effects, se, dat$original, link, ci_size)
     
     plots <- c(plots, list(tree_effect_plot=tree_effect_plot, tree_effect_density_plot=tree_effect_density_plot))
   }
@@ -26,8 +26,8 @@ make_standardization_plots <- function(effects, se=NULL, dat, link="log", dep_va
   # Time effect
   if ("Time" %in% names(effects))
   {
-    time_effect_plot <- make_effect_plot(effects, se, "Time", temporal=TRUE, link,  ci_size)
-    time_effect_density_plot <- make_effect_density_plot(effects, "Time", link)
+    time_effect_plot <- make_effect_plot(effects, se, "Time", temporal=TRUE, link,  ci_size, group_by)
+    time_effect_density_plot <- make_effect_density_plot(effects, "Time", link, group_by)
     
     plots <- c(plots, list(time_effect_plot=time_effect_plot, time_effect_density_plot=time_effect_density_plot))
   }
@@ -35,8 +35,8 @@ make_standardization_plots <- function(effects, se=NULL, dat, link="log", dep_va
   # Age effect
   if ("Age" %in% names(effects))
   {
-    age_effect_plot <- make_effect_plot(effects, se, "Age", temporal=TRUE, link, ci_size)
-    age_effect_density_plot <- make_effect_density_plot(effects, "Age", link)
+    age_effect_plot <- make_effect_plot(effects, se, "Age", temporal=TRUE, link, ci_size, group_by)
+    age_effect_density_plot <- make_effect_density_plot(effects, "Age", link, group_by)
     
     plots <- c(plots, list(age_effect_plot=age_effect_plot, age_effect_density_plot=age_effect_density_plot))
   }
@@ -52,16 +52,38 @@ make_standardization_plots <- function(effects, se=NULL, dat, link="log", dep_va
 
 # Sample depth plotting ####
 # Only defined / useful for time and age
-make_sample_depth_plot <- function(tra, id="Time"){
-  sample_depth <- sample_depth_tra(tra, id)
+make_sample_depth_plot <- function(tra, id="Time", group_by=NA){
   
-  dat <- data.frame(sample_depth=sample_depth, id=levels(tra[[id]]))
+  # Extract and format sample depth
+  sample_depth <- sample_depth_tra(tra, id, group_by)
   
+  if(id %in% group_by)
+  {
+    dat <- vector(mode="list", length=length(sample_depth))
+    groups <- names (sample_depth
+    names(dat) <- groups
+  
+    for (group in groups)){
+      dat[[group]] <- data.frame(sample_depth=sample_depth[[group]], id=levels(tra[[id]]), group=group)
+    }
+    
+    dat <- Reduce(rbind, dat)
+  
+    } else {
+    dat <- data.frame(sample_depth=sample_depth, id=names(sample_depth))
+  }
+
   # Coerce id to numeric value
   dat$id <- as.numeric(as.character(dat$id))
   
   # Make the plot
   my_plot <- ggplot(dat, aes(x=id, y=sample_depth)) + geom_area() + xlab(id) + ylab("Sample depth") + theme_bw()
+  
+  # Facet different groups
+  if(id %in% group_by)
+  {
+    my_plot <- my_plot + facet_grid(group~.)
+  }
 
   return(my_plot)
 }
@@ -69,10 +91,32 @@ make_sample_depth_plot <- function(tra, id="Time"){
 # Effects plotting ####
 
 # Simple plotting of effects
-make_effect_plot <- function(effects, se=NULL, effect_name, temporal=FALSE, link="log", ci_size=0.95){
+make_effect_plot <- function(effects, se=NULL, id, temporal=FALSE, link="log", ci_size=0.95, group_by=NA){
   
   # Load data into a data frame
-  dat <- data.frame(effect=effects[[effect_name]], id=names(effects[[effect_name]]))
+  if(id %in% group_by)
+  {
+    dat <- vector(mode="list", length=length(effects[[id]]))
+    groups <- names (effects[[id]])
+    names(dat) <- groups
+    
+    for (group in groups){
+      dat[[group]] <- data.frame(effect=effects[[id]][[group]], id=names(effects[[id]][[group]]), group=group)
+      
+      if(!is.null(se)){
+        dat[[group]]$se <- se[[id]][[group]]
+      }
+    }
+    
+    dat <- Reduce(rbind, dat)
+    
+  } else {
+    dat <- data.frame(effect=effects[[id]], id=names(effects[[id]]))
+    
+    if(!is.null(se)){
+      dat$se <- se[[id]]
+    }
+  }
   
   # Coerce temporal data ids to numeric form
   if (temporal){
@@ -81,8 +125,7 @@ make_effect_plot <- function(effects, se=NULL, effect_name, temporal=FALSE, link
   
   # Transform standard errors for coefficients into confidence intervals
   if(!is.null(se)){
-    dat$se <- se[[effect_name]]
-    
+ 
     # qnorm requires % of values that are included in each tail
     # Therefore half should be missing on each side
     ci_Z <- 1 - (1-ci_size)/2
@@ -98,7 +141,7 @@ make_effect_plot <- function(effects, se=NULL, effect_name, temporal=FALSE, link
   }
   
   # Make the base graphic
-  my_plot <- ggplot(dat, aes(x=id,y=effect, ymax=upper, ymin=lower)) + theme_bw() + ylab(paste(effect_name, "effect")) + xlab(effect_name)
+  my_plot <- ggplot(dat, aes(x=id,y=effect, ymax=upper, ymin=lower)) + theme_bw() + ylab(paste(id, "effect")) + xlab(id)
   
   # Nontemporal data is unordered and works best as a bar graph or similar
   # Temporal data is ordered and should be a line graph
@@ -117,36 +160,86 @@ make_effect_plot <- function(effects, se=NULL, effect_name, temporal=FALSE, link
       my_plot <- my_plot + geom_linerange()
     }
   }  
+  
+  # Facet plot by group
+  if(id %in% group_by)
+  {
+    my_plot <- my_plot + facet_grid(group~.)
+  }  
+  
   return(my_plot)
 }
 
 # Looking at the frequency of each magnitude of effects
-make_effect_density_plot <- function(effects, effect_name, link){
+make_effect_density_plot <- function(effects, id, link, group_by=NA){
   
   # Load data into a data frame
-  my_effect <- effects[[effect_name]]
-  dat <- data.frame(effect=my_effect)
-  
-  # Make the base graphic
-  my_plot <- ggplot(dat, aes(x=effect)) + theme_bw() + ylab("Density estimate") + xlab(paste(effect_name, "effect")) + geom_density(colour="red", fill="red", alpha=0.5)
+  if(id %in% group_by)
+  {
+    dat <- vector(mode="list", length=length(effects[[id]]))
+    groups <- names (effects[[id]])
+    names(dat) <- groups
     
-  # Estimate idealized Pdat
-  x_min <- min(min(my_effect), 0)
-  x_max <- max(my_effect)
-  
-  x_ticks <- seq(from=x_min, to=x_max, length.out=100)
-  
-  # Generate Pdat
-  if (link=="identity"){
-    pdat <- dnorm(x_ticks, mean=mean(my_effect),sd=sd(my_effect))    
-  } else if (link=="log"){
-    pdat <- dlnorm(x_ticks, meanlog=mean(log(my_effect)), sdlog=sd(log(my_effect)))
+    for (group in groups){
+      dat[[group]] <- data.frame(effect=effects[[id]][[group]], group=group)
+    }
+    
+    dat <- Reduce(rbind, dat)
+    
+  } else {
+    dat <- data.frame(effect=effects[[id]])
   }
   
-  pdat_data <- data.frame(effect=x_ticks, density=pdat)
+  # Make the base graphic
+  my_plot <- ggplot(dat, aes(x=effect)) + theme_bw() + ylab("Density estimate") + xlab(paste(id, "effect")) + geom_density(colour="red", fill="red", alpha=0.5)
+    
+  if (id %in% group_by){
+    x_min <- min(min(unlist(effects[[id]])), 0)
+    x_max <- max(unlist(effects[[id]]))
+    
+    x_ticks <- seq(from=x_min, to=x_max, length.out=100)
+    
+    pdf_data <- vector(mode="list", length=length(groups))
+    names(pdf_data) <- groups
+    
+    for (group in groups){
+      # Estimate theoretical PDF
+      if (link=="identity"){
+        pdf <- dnorm(x_ticks, mean=mean(effects[[id]][[group]]),sd=sd(effects[[id]][[group]]))    
+      } else if (link=="log"){
+        pdf <- dlnorm(x_ticks, meanlog=mean(log(effects[[id]][[group]])), sdlog=sd(log(effects[[id]][[group]])))
+      }
+      
+      pdf_data[[group]] <- data.frame(effect=x_ticks, density=pdat, group=group)
+    }
+    
+    pdf_data <- Reduce(rbind, pdf_data)
+    
+  } else {
+    x_min <- min(min(effects[[id]]), 0)
+    x_max <- max(effects[[id]])
+    
+    x_ticks <- seq(from=x_min, to=x_max, length.out=100)
+    
+    # Estimate theoretical PDF
+    if (link=="identity"){
+      pdat <- dnorm(x_ticks, mean=mean(effects[[id]]),sd=sd(effects[[id]]))    
+    } else if (link=="log"){
+      pdat <- dlnorm(x_ticks, meanlog=mean(log(effects[[id]])), sdlog=sd(log(effects[[id]])))
+    }
+    
+    pdat_data <- data.frame(effect=x_ticks, density=pdat)
+  }
+
   
-  # Add pdat information
+  # Add PDF
   my_plot <- my_plot + geom_area(data=pdat_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
+  
+  # Facet plot by group
+  if(id %in% group_by)
+  {
+    my_plot <- my_plot + facet_grid(group~.)
+  }
   
   return(my_plot)
 }
@@ -161,7 +254,7 @@ make_tree_effect_age_plot <- function(effects, se=NULL, tra, link, ci_size=0.95)
   
   # Transform standard errors for coefficients into confidence intervals
   if(!is.null(se)){
-    dat$se <- se[[effect_name]]
+    dat$se <- se[[id]]
     
     # qnorm requires % of values that are included in each tail
     # Therefore half should be missing on each side
@@ -196,7 +289,7 @@ make_tree_effect_year_plot <- function(effects,  se=NULL, tra, link="log", ci_si
   
   # Transform standard errors for coefficients into confidence intervals
   if(!is.null(se)){
-    dat$se <- se[[effect_name]]
+    dat$se <- se[[id]]
     
     # qnorm requires % of values that are included in each tail
     # Therefore half should be missing on each side

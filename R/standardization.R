@@ -89,7 +89,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), group_by=NA, link="log"
   
   # Make plots if needed
   if (make_plots){
-      plots <- make_standardization_plots(effects, se, dat, link, dep_var, ci_size)
+      plots <- make_standardization_plots(effects, se, dat, group_by, link, dep_var, ci_size)
   
       # Display the plots immediately
       print("Plots constructed")        
