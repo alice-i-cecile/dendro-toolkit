@@ -34,7 +34,7 @@ model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim
   {
     fit$k <- k
   } else{
-    fit$k <- k_tra(tra, model)
+    fit$k <- k_tra(tra, model, group_by)
   }
   fit$sigma <- sigma_tra(fit$residuals, link, dep_var)
   
@@ -120,24 +120,29 @@ n_tra <- function (tra)
 }
 
 # Number of parameters estimated (k)
-k_tra <- function (tra, model)
+k_tra <- function (tra, model, group_by=NA)
 {
   
-  # One parameter automatically for estimate of link
+  # One parameter automatically for estimate of error term
   k <- 1
   
   # One parameter is estimated for each index of the effect vectors
-  if ("Tree" %in% model)
+  for (E in model)
   {
-    k <- k + nlevels(tra$Tree)
-  }
-  if ("Time" %in% model)
-  {
-    k <- k + nlevels(tra$Time)
-  }
-  if ("Age" %in% model)
-  {
-    k <- k + nlevels(tra$Age)
+    if (E %in% group_by)
+    {
+      cname <- paste(E, "Group", sep="_")
+      groups <- levels(tra[[cname]])
+      
+      # Each group adds unique parameters
+      # But only count parameters that are actually in that group
+      for (group in groups){
+        k <- k + length(unique(tra[tra[[cname]]==group, E]))
+      }
+    } else 
+    {
+      k <- k + nlevels (tra[[E]])  
+    }
   }
   
   # Information about some parameters is lost due to rescaling (dummy variable trap)
