@@ -1,7 +1,7 @@
 # Setting up effects ####
 set.seed(42)
 n_tree <- 20
-n_time <- 20
+n_time <- 50
 n_age <- n_time
 noise <- 0.1
 
@@ -85,12 +85,17 @@ additive_dataset <- list(true_effects=true_effects, complete_tra=complete_tra, r
 
 save(additive_dataset, file="./Data/additive_dataset.RData")
 
+# Loading in relevant dataset ####
+load(file="./Data/additive_dataset.RData")
+# data(additive_dataset)
+
+true_effects <- additive_dataset$true_effects
+
+complete_tra <- additive_dataset$complete_tra
+random_incomplete_tra <- additive_dataset$random_incomplete_tra
+realistic_incomplete_tra <- additive_dataset$realistic_incomplete_tra
+
 # Testing out various standardization options ####
-
-# Loading in relevant dataset
-# load(file="./Data/additive_dataset.RData")
-
-data(additive_dataset)
 
 # Check optimizers on the complete data
 seq_1 <- standardize_tra(complete_tra, optim="sequential", link="identity")
