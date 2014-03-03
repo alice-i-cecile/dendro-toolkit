@@ -21,10 +21,13 @@ standardize_gam <- function (tra, model=c("Time", "Age"), link="log", dep_var="G
   growth_model <- gam(growth_formula, family=family, data=tra, ...)
   
   # Extract estimates of the effect
-  # Correct way
   effects <- extract_effects_gam(growth_model, model, link, tra)
   
-  return (effects)
+  # Extract the number of degrees of freedom
+  # Custom because of smoothing
+  k <- extract_k_gam(growth_model, model, tra)
+  
+  return (list(effects=effects, k=k))
   
 }
 
@@ -116,4 +119,36 @@ extract_effects_gam <- function(growth_model, model, link, tra)
   
   return(effects)
   
+}
+
+# Number of parameters estimated (k)
+# Custom for GAM models
+# Borrows from k_tra()
+extract_k_gam <- function (growth_model, tra, model)
+{
+  
+  # One parameter automatically for estimate of link
+  k <- 1
+  
+  # One parameter is estimated for each index of the effect vectors
+  if ("Tree" %in% model)
+  {
+    k <- k + nlevels(tra$Tree)
+  }
+  if ("Time" %in% model)
+  {
+    k <- k + nlevels(tra$Time)
+  }
+  if ("Age" %in% model)
+  {
+    k <- k + summary(growth_model)$edf
+  }
+  
+  # Inlinkation about some parameters is lost due to rescaling (dummy variable trap)
+  num_effects <- length(model)
+  
+  k <- ifelse (num_effects > 0, k - (num_effects-1), 0)
+  
+  
+  return(k)
 }

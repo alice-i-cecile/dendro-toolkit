@@ -35,7 +35,9 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", dep_var="Gr
  
   else if(optim == "gam")
   {
-    effects <- standardize_gam(tra, model, link, dep_var, ...)
+    results <- standardize_gam(tra, model, link, dep_var, ...)
+    effects <- results$effects
+    k <- results$k
   }
   
   # Check for 3 effect model
@@ -60,7 +62,11 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", dep_var="Gr
   effects <- rescale_effects(effects, link)
   
   # Compute model fit statistics
-  fit <- model_fit_tra (effects, tra, model, link, dep_var, optim)
+  if (optim=="gam"){
+    fit <- model_fit_tra (effects, tra, model, link, dep_var, optim, k)
+  } else {
+    fit <- model_fit_tra (effects, tra, model, link, dep_var, optim)
+  }
   print("Model fit computed")  
   
   # Compute standard errors of estimated coefficients
