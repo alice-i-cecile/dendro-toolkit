@@ -8,7 +8,7 @@ standardize_gam <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
   tra$Age <- as.numeric(as.character(tra$Age))
   
   # Construct formula for regression
-  growth_formula <- as.formula(make_gam_formula(model, dep_var))
+  growth_formula <- as.formula(make_gam_formula(model, group_by, dep_var))
   
   print ("Using a generalized additive model used to standardize data")
   print (paste("Gaussian family, link is set to", link))
@@ -21,18 +21,18 @@ standardize_gam <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
   growth_model <- gam(growth_formula, family=family, data=tra, ...)
   
   # Extract estimates of the effect
-  effects <- extract_effects_gam(growth_model, model, link, tra)
+  effects <- extract_effects_gam(growth_model, model, group_by, link, tra)
   
   # Extract the number of degrees of freedom
   # Custom because of smoothing
-  k <- extract_k_gam(growth_model, model, tra)
+  k <- extract_k_gam(growth_model, tra, model, group_by)
   
   return (list(effects=effects, k=k))
   
 }
 
 # Formula construction for GAM standardization
-make_gam_formula <- function (model, dep_var)
+make_gam_formula <- function (model, group_by, dep_var)
 {
   dep_str <- dep_var
   
@@ -48,20 +48,13 @@ make_gam_formula <- function (model, dep_var)
 
 
 # Extracting effects for glm models
-extract_effects_gam <- function(growth_model, model, link, tra)
+extract_effects_gam <- function(growth_model, model, group_by, link, tra)
 {
   # Reset age index to factor
   tra$Age <- as.factor(tra$Age)
   
   # Skeleton effects for relisting coefficients
-  skeleton_effects <- vector(mode="list", length=length(model))
-  names(skeleton_effects) <- model
-  
-  for (i in model){
-    dim_i <- nlevels(tra[[i]])
-    skeleton_effects[[i]] <-  rep.int(NA,  dim_i)
-    names(skeleton_effects[[i]]) <- levels(tra[[i]])
-  }
+  skele <- make_skeleton_effects(tra, model, group_by, link)
   
   # Grab the coefficients from the regression model
   effect_coef <- coef(growth_model)
@@ -72,7 +65,7 @@ extract_effects_gam <- function(growth_model, model, link, tra)
   }
   
   # Put the coefficients into a list of the appropriate size
-  boneless_effects <- unlist(skeleton_effects)
+  boneless_effects <- unlist(skele)
   matching_effect_names <- intersect(names(effect_coef), names(boneless_effects))
   
   for (n in matching_effect_names){
@@ -81,18 +74,18 @@ extract_effects_gam <- function(growth_model, model, link, tra)
   
   # Missing effects are set to base levels
   # Returned invisibly by regression
-  boneless_effects[is.na(boneless_effects)] <- 0
+  boneless_effects[!(names(boneless_effects) %in% matching_effect_names)] <- 0
   
   # Fix structure of effects
-  effects <- relist(boneless_effects, skeleton_effects)
+  effects <- relist(boneless_effects, skele)
   
   # Add in effects for age
   if ("Age" %in% model)
   {
     # Find estimates of effect by comparing predictions to predictions from other variables
-    Tree_index <- levels(tra$Tree)[1]
-    Time_index <- levels(tra$Time)[1]
-    Age_levels <- as.numeric(levels(tra$Age))
+    Tree_index <- unique(tra$Tree)[1]
+    Time_index <- unique(tra$Time)[1]
+    Age_levels <- as.numeric(unique(tra$Age))
     
     dummy_data <- data.frame(Tree=Tree_index, Time=Time_index, Age=Age_levels)
     predicted_by_age <- predict(growth_model, dummy_data)
@@ -102,7 +95,8 @@ extract_effects_gam <- function(growth_model, model, link, tra)
     baseline <- 0
     if ("Tree" %in% model){
       base_Tree <- effect_coef[paste("Tree", Tree_index, sep=".")]
-      baseline <- baseline + base_Tree    }    
+      baseline <- baseline + base_Tree    
+    }    
     if ("Time" %in% model){
       base_Time <- effect_coef[paste("Time", Time_index, sep=".")]
       baseline <- baseline + base_Time
@@ -124,7 +118,7 @@ extract_effects_gam <- function(growth_model, model, link, tra)
 # Number of parameters estimated (k)
 # Custom for GAM models
 # Borrows from k_tra()
-extract_k_gam <- function (growth_model, tra, model)
+extract_k_gam <- function (growth_model, tra, model, group_by)
 {
   
   # One parameter automatically for estimate of link

@@ -5,7 +5,7 @@ standardize_glm <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
 {
   
   # Construct formula for regression
-  growth_formula <- as.formula(make_glm_formula(model, dep_var))
+  growth_formula <- as.formula(make_glm_formula(model, group_by, dep_var))
   
   print ("Using a generalized linear model used to standardize data")
   print (paste("Gaussian family, link is set to", link))
@@ -19,14 +19,14 @@ standardize_glm <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
     
   # Extract estimates of the effect
   # Correct way
-  effects <- extract_effects_glm(growth_model, model, link, tra)
+  effects <- extract_effects_glm(growth_model, model, group_by, link, tra)
   
   return (effects)
   
 }
 
 # Formula construction for GAM standardization
-make_glm_formula <- function (model, dep_var)
+make_glm_formula <- function (model, group_by, dep_var)
 {
   dep_str <- dep_var
   ind_str <- Reduce(function(...){paste(..., sep="+")}, c("0", model))
@@ -39,17 +39,10 @@ make_glm_formula <- function (model, dep_var)
 
 
 # Extracting effects for glm models
-extract_effects_glm <- function(growth_model, model, link, tra)
+extract_effects_glm <- function(growth_model, model, group_by, link, tra)
 {
   # Skeleton effects for relisting coefficients
-  skeleton_effects <- vector(mode="list", length=length(model))
-  names(skeleton_effects) <- model
-  
-  for (i in model){
-    dim_i <- nlevels(tra[[i]])
-    skeleton_effects[[i]] <-  rep.int(NA,  dim_i)
-    names(skeleton_effects[[i]]) <- levels(tra[[i]])
-  }
+  skele <- make_skeleton_effects(tra, model, group_by, link)
     
   # Grab the coefficients from the regression model
   effect_coef <- coef(growth_model)
@@ -60,7 +53,7 @@ extract_effects_glm <- function(growth_model, model, link, tra)
   }
   
   # Put the coefficients into a list of the appropriate size
-  boneless_effects <- unlist(skeleton_effects)
+  boneless_effects <- unlist(skele)
   matching_effect_names <- intersect(names(effect_coef), names(boneless_effects))
 
   for (n in matching_effect_names){
@@ -72,7 +65,7 @@ extract_effects_glm <- function(growth_model, model, link, tra)
   boneless_effects[is.na(boneless_effects)] <- 0
   
   # Fix structure of effects
-  effects <- relist(boneless_effects, skeleton_effects)
+  effects <- relist(boneless_effects, skele)
   
   # Account for link
   if (link=="log"){
