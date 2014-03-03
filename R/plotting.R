@@ -59,11 +59,11 @@ make_sample_depth_plot <- function(tra, id="Time", group_by=NA){
   
   if(id %in% group_by)
   {
-    dat <- vector(mode="list", length=length(sample_depth))
-    groups <- names (sample_depth
+    groups <- names (sample_depth)
+    dat <- vector(mode="list", length=length(groups))
     names(dat) <- groups
   
-    for (group in groups)){
+    for (group in groups){
       dat[[group]] <- data.frame(sample_depth=sample_depth[[group]], id=levels(tra[[id]]), group=group)
     }
     
@@ -334,7 +334,7 @@ make_residual_density_plot <- function(residuals, link="log", dep_var="Growth"){
   
   # Generate Pdat
   if (link=="identity"){
-    pdat <- dnorm(x_ticks, sd(resid))    
+    pdat <- dnorm(x_ticks, sd=sd(resid))    
   } else if (link=="log"){
     pdat <- dlnorm(x_ticks, sdlog=sd(log(resid)))
   }
