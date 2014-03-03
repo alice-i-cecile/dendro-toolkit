@@ -333,6 +333,7 @@ est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
     if (E %in% group_by){
       skele <- make_skeleton_effects(resids,model,group_by)
       groups <- names(skele[[E]])
+      cname <- paste(E, "Group", sep="_")
       
       e_list <- lapply(groups, function(group){unique(tra[tra[[cname]]==group,][[E]])})
       names(e_list) <- groups
