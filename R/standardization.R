@@ -6,7 +6,7 @@
 # post_hoc: apply a post-hoc correction to reduce instability in 3-effect models
 # ...: further arguments to control model fitting in optimization algorithm
 
-standardize_tra <- function(tra, model=c("Age", "Time"), link="log", dep_var="Growth", optim="glm", ci_size=0.95, post_hoc=TRUE, return_data=FALSE, make_plots=TRUE, ...)
+standardize_tra <- function(tra, model=c("Age", "Time"), group_by=NA, link="log", dep_var="Growth", optim="glm", ci_size=0.95, post_hoc=TRUE, return_data=FALSE, make_plots=TRUE, ...)
 {
   
   # Exception handling
@@ -17,7 +17,17 @@ standardize_tra <- function(tra, model=c("Age", "Time"), link="log", dep_var="Gr
     {
       stop("Zero or negative values cannot be use. Estimated effects will not be stable.")
     }
-  }  
+  }
+  
+  # Data cleaning
+  # Ensure groups and ids are formatted as factors
+  for (id in model){
+    tra[[id]] <- as.factor(tra[[id]])
+  }
+  for (g in group_by){
+    cname <- paste(g, "Group", sep="_")
+    tra[[cname]] <- as.factor(tra[[cname]])
+  }
   
   # Fitting the model
   if(optim == "alternate")

@@ -1,7 +1,7 @@
 # GLM fixed effects standardization ####
 
 # Main GLM function
-standardize_glm <- function (tra, model=c("Time", "Age"), link="log", dep_var="Growth", ...)
+standardize_glm <- function (tra, model=c("Time", "Age"), group_by=NA, link="log", dep_var="Growth", ...)
 {
   
   # Construct formula for regression

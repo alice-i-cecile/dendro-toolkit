@@ -1,7 +1,7 @@
 # GAM fixed effects standardization ####
 
 # Main GLM function
-standardize_gam <- function (tra, model=c("Time", "Age"), link="log", dep_var="Growth", ...)
+standardize_gam <- function (tra, model=c("Time", "Age"), group_by=NA, link="log", dep_var="Growth", ...)
 {
   
   # Clean age info to ensure numeric form

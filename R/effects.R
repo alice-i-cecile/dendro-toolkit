@@ -1,35 +1,60 @@
 # Estimating and removing effects ####
 
 # Naive estimate of a single effect (analagous to constructing regional curve or standardized chronology)
-est_effect <- function (tra, id, link, dep_var="Growth")
+est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
 {  
 
   # Estimate effect using averages (crude method of moments)
   estimate_effect <- function(id_i)
   {
-    data <- tra[tra[[id]]==id_i, dep_var]
+    # Estimate using rows from relevant group
+    if (!is.na(group)){
+      cname <- paste(id, "Group", sep="_")
+      data <- tra[tra[[id]]==id_i & tra[[cname]]==group, dep_var]
+    } else {
+      data <- tra[tra[[id]]==id_i, dep_var]
+    }
+    
+    # Geometric mean is log equivalent of the arithmetic mean
     if (link=="log"){
       est_effect <- geomMean(data)
     } else {
       est_effect <- mean(data, na.rm=TRUE)
     }
+    
+    names (est_effect) <- id_i
+    
     return(est_effect)
   }
   
-  est_effect <- sapply(levels(tra[[id]]), estimate_effect)
+  
+  if (!is.na(group)){
+    cname <- paste(id, "Group", sep="_")
+    id_levels <- unique(tra[tra[[cname]]==group,][[id]])
+  } else {
+    id_levels <- unique(tra[[id]])
+  }
+  est_effect <- sapply(id_levels, estimate_effect)
   
   return (est_effect)
 }
 
 # Remove an effect from a tree ring array
-remove_effect <- function (tra, effect, id, link="log", dep_var="Growth")
+remove_effect <- function (tra, effect, id, link="log", dep_var="Growth", group=NA)
 {
     
   removed_tra <- tra
   
   for (effect_id in names(effect))
   {
-    relevant_rows <- tra[[id]]==effect_id
+    # Only affect rows from relevant group
+    if (!is.na(group)){
+      cname <- paste(id, "Group", sep="_")
+      relevant_rows <- tra[[id]]==effect_id & tra[[cname]]==group
+    } else {
+      relevant_rows <- tra[[id]]==effect_id
+    }
+    
     if (link=="identity")
     {
       removed_tra[relevant_rows,"Growth"] <- removed_tra[relevant_rows, dep_var] - effect[effect_id]
@@ -114,6 +139,57 @@ rescale_effects <- function (effects, link="log")
   }
   
   return (effects)
+}
+
+# Create skeleton effects ####
+
+make_skeleton_effects <- function(tra, model, group_by)
+{
+  # Create initial list
+  effects <- vector(mode="list", length=length(model))
+  names(effects) <- model
+  
+  # Dummy starting effects
+  for (i in model){
+    if (i %in% group_by)
+    {
+      # Each group is a sub-list
+      cname <- paste(i, "Group", sep="_")
+      effects[[i]] <- vector(mode="list", length=nlevels(tra[[cname]]))
+      names(effects[[i]]) <- levels(tra[[cname]])
+      
+      for (j in levels(tra[[cname]]))
+      {
+        dim_j <- length(unique(tra[tra[[cname]]==j,][[i]]))
+        
+        if (link=="log")
+        {
+          effects[[i]][[j]] <-  rep.int(1,  dim_j)
+        } else
+        {
+          effects[[i]][[j]] <-  rep.int(0,  dim_j)
+        }
+        
+        names(effects[[i]][[j]]) <- unique(tra[tra[[cname]]==j,][[i]])
+        
+      }
+    } else {
+      dim_i <- nlevels(tra[[i]])
+      
+      if (link=="log")
+      {
+        effects[[i]] <-  rep.int(1,  dim_i)
+      } else
+      {
+        effects[[i]] <-  rep.int(0,  dim_i)
+      }
+      
+      names(effects[[i]]) <- levels(tra[[i]])
+    }
+  }
+  
+  return(effects)
+  
 }
 
 # Crude estimation of standard errors for each effect ####
