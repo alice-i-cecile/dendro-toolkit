@@ -24,11 +24,13 @@ standardize_tra <- function(tra, model=c("Age", "Time"), group_by=NA, link="log"
   for (id in model){
     tra[[id]] <- as.factor(tra[[id]])
   }
-  for (g in group_by){
-    cname <- paste(g, "Group", sep="_")
-    tra[[cname]] <- as.factor(tra[[cname]])
+  if (!is.na(group_by)){
+    for (g in group_by){
+      cname <- paste(g, "Group", sep="_")
+      tra[[cname]] <- as.factor(tra[[cname]])
+    }
   }
-  
+
   # Fitting the model
   if(optim == "alternate")
   {
