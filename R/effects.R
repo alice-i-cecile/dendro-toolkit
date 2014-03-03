@@ -257,7 +257,7 @@ rescale_effects <- function (effects, link="log", group_by=NA)
 
 # Create skeleton effects ####
 
-make_skeleton_effects <- function(tra, model, group_by)
+make_skeleton_effects <- function(tra, model, group_by, link)
 {
   # Create initial list
   effects <- vector(mode="list", length=length(model))
@@ -331,7 +331,7 @@ est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
   effect_se <- function(E)
   {
     if (E %in% group_by){
-      skele <- make_skeleton_effects(resids,model,group_by)
+      skele <- make_skeleton_effects(resids,model,group_by,link)
       groups <- names(skele[[E]])
       cname <- paste(E, "Group", sep="_")
       

@@ -5,7 +5,7 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), group_by=NA, lin
 {
   
   # Construct skeleton effects to scaffold algorithm
-  effects <- make_skeleton_effects(tra, model, group_by)
+  effects <- make_skeleton_effects(tra, model, group_by, link)
   
   # Don't attempt to fit null models
   if (length(model)==0)
