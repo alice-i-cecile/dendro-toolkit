@@ -131,7 +131,7 @@ k_tra <- function (tra, model)
     k <- k + nlevels(tra$Age)
   }
   
-  # Inlinkation about some parameters is lost due to rescaling (dummy variable trap)
+  # Information about some parameters is lost due to rescaling (dummy variable trap)
   num_effects <- length(model)
   
   k <- ifelse (num_effects > 0, k - (num_effects-1), 0)
