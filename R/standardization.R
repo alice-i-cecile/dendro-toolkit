@@ -66,16 +66,16 @@ standardize_tra <- function(tra, model=c("Age", "Time"), group_by=NA, link="log"
   print("Standardization complete")
   
   # Make sure elements of effects are in the right order
-  effects <- sort_effects(effects, tra)
+  effects <- sort_effects(effects, tra, group_by)
   
   # Rescale the effects to standard form
-  effects <- rescale_effects(effects, link)
+  effects <- rescale_effects(effects, link, group_by)
   
   # Compute model fit statistics
   if (optim=="gam"){
-    fit <- model_fit_tra (effects, tra, model, link, dep_var, optim, k)
+    fit <- model_fit_tra (effects, tra, model, group_by, link, dep_var, optim, k)
   } else {
-    fit <- model_fit_tra (effects, tra, model, link, dep_var, optim)
+    fit <- model_fit_tra (effects, tra, model, group_by, link, dep_var, optim)
   }
   print("Model fit computed")  
   

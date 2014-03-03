@@ -2,7 +2,7 @@
 # Model fit statistics ####
 
 # Compute all the relevant model fit statistics for fixed-effects standardization
-model_fit_tra <- function(effects, tra, model, link, dep_var, optim, k=NA)
+model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim, k=NA)
 {
   
   fit <- list()
@@ -25,7 +25,7 @@ model_fit_tra <- function(effects, tra, model, link, dep_var, optim, k=NA)
     fit$residuals <- tra
     
   } else {
-    fit$predicted <- predicted_tra(effects, tra, model, link, dep_var)
+    fit$predicted <- predicted_tra(effects, tra, model, group_by, link, dep_var)
     fit$residuals <- residuals_tra (tra, fit$predicted, link, dep_var)
   }
   
@@ -53,7 +53,7 @@ model_fit_tra <- function(effects, tra, model, link, dep_var, optim, k=NA)
 }
 
 # Predicted values
-predicted_tra <- function (effects, tra, model, link, dep_var)
+predicted_tra <- function (effects, tra, model, group_by, link, dep_var)
 {
   
   # Set starting values to null value
@@ -65,14 +65,23 @@ predicted_tra <- function (effects, tra, model, link, dep_var)
     tra[[dep_var]] <- log(tra[[dep_var]])
   }
   
-  # Add effects on 1 at a time
+  # Add effects one at a time
   for (r in 1:nrow(predicted))
   {
     for (e in model)
     {
-      i <- as.character(tra[r, e])
-      
-      predicted[r, dep_var] <- predicted[r, dep_var] + effects[[e]][i]
+      if (e %in% group_by)
+      {
+        cname <- paste(e, "Group", sep="_")
+        group <- tra[r, cname]
+        i <- as.character(tra[r, e])
+        
+        predicted[r, dep_var] <- predicted[r, dep_var] + effects[[e]][[group]][i]
+      } else {
+        i <- as.character(tra[r, e])
+        
+        predicted[r, dep_var] <- predicted[r, dep_var] + effects[[e]][i]
+      }
     }
   }
   
