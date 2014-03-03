@@ -32,20 +32,20 @@ standardize_tra <- function(tra, model=c("Age", "Time"), group_by=NA, link="log"
   # Fitting the model
   if(optim == "alternate")
   {
-    effects <- standardize_alternate(tra, model, link, dep_var, ...)
+    effects <- standardize_alternate(tra, model, group_by, link, dep_var, ...)
   }
   else if(optim == "sequential")
   {
-    effects <- standardize_sequential(tra, model, link, dep_var, ...)
+    effects <- standardize_sequential(tra, model, group_by, link, dep_var, ...)
   }
   else if(optim == "glm")
   {
-   effects <- standardize_glm(tra, model, link, dep_var, ...)
+   effects <- standardize_glm(tra, model, group_by, link, dep_var, ...)
   }
  
   else if(optim == "gam")
   {
-    results <- standardize_gam(tra, model, link, dep_var, ...)
+    results <- standardize_gam(tra, model, group_by, link, dep_var, ...)
     effects <- results$effects
     k <- results$k
   }
@@ -80,7 +80,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), group_by=NA, link="log"
   print("Model fit computed")  
   
   # Compute standard errors of estimated coefficients
-  se <- est_se(fit$residuals, model, link, dep_var)
+  se <- est_se(fit$residuals, model, group_by, link, dep_var)
   print("Standard errors of estimates computed")
   
   # Seperate predicted and residuals from fit data
@@ -97,7 +97,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), group_by=NA, link="log"
   }
   
   # Record model fitting settings
-  settings <- list(model=model, link=link, optim=optim,  dep_var=dep_var)
+  settings <- list(model=model, group_by=group_by, link=link, optim=optim,  dep_var=dep_var)
                    
   # Compile and output all relevant information
   out <- list(effects=effects, se=se, fit=fit, settings=settings)

@@ -307,7 +307,7 @@ make_skeleton_effects <- function(tra, model, group_by)
 }
 
 # Crude estimation of standard errors for each effect ####
-est_se <- function(resid, model, link="log", dep_var){
+est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
   
   # E: name of effect
   # e: index
@@ -319,16 +319,44 @@ est_se <- function(resid, model, link="log", dep_var){
     return(se)
   }
   
-  grab_res <- function(e, E){
-    resid[resid[[E]]==e, dep_var]
+  grab_res <- function(e, E, group=NA){
+    if (!is.na(group)){
+      cname <- paste(E, "Group", sep="_")
+      return(resids[resids[[E]]==e & resids[[cname]]==group, dep_var])
+    } else {
+      return(resids[resids[[E]]==e, dep_var])
+    }
   }
   
   effect_se <- function(E)
   {
-    e_list <- levels(resid[[E]])
-    res_list <- lapply(e_list, grab_res, E=E)
-    se_list <- sapply(res_list, mom_se)
-    names(se_list) <- e_list
+    if (E %in% group_by){
+      skele <- make_skeleton_effects(resids,model,group_by)
+      groups <- names(skele[[E]])
+      
+      e_list <- lapply(groups, function(group){unique(tra[tra[[cname]]==group,][[E]])})
+      names(e_list) <- groups
+      
+      res_list <- lapply(groups, function(group)
+      {
+        sel_resid <- sapply(e_list[[group]], grab_res, E=E, group=group)
+        names(sel_resid) <- e_list[[group]]
+        return(sel_resid)
+      })
+      names(res_list) <- groups
+      
+      se_list <- lapply(groups, function(group)
+      {
+        sapply(res_list[[group]], mom_se) 
+      })
+      names(se_list) <- groups
+      
+    } else {
+      e_list <- levels(resids[[E]])
+      res_list <- lapply(e_list, grab_res, E=E)
+      se_list <- sapply(res_list, mom_se)
+      names(se_list) <- e_list
+    }
     return(se_list)
   }
   
@@ -336,7 +364,7 @@ est_se <- function(resid, model, link="log", dep_var){
   names(all_se) <- model
   
   # Sort so names line up
-  all_se <- sort_effects(all_se, resid)
+  all_se <- sort_effects(all_se, resids, group_by)
   
   return(all_se)
 }
