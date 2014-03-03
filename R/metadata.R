@@ -16,13 +16,13 @@ grab_birth_year <- function(i, tra)
 
 get_birth_years <- function(tra)
 {
-  birth_years <- sapply(levels(tra$Tree), grab_birth_year, tra=tra, sparse)
+  birth_years <- sapply(unique(tra$Tree), grab_birth_year, tra=tra, sparse)
   return (birth_years)
 }
 
 get_birth_index <- function(birth_year, tra)
 {
-  years <- sort(as.numeric(levels(tra$Time)))
+  years <- sort(as.numeric(unique(tra$Time)))
   
   year_index <- which(birth_year==years)
   age_index <- 1
@@ -34,17 +34,18 @@ get_birth_index <- function(birth_year, tra)
 # Get sample size for a characteristic ####
 sample_depth_tra <- function(tra, id="Time", group_by=NA){
   
-  ids <- levels (tra[[id]])
+  ids <- unique(tra[[id]])
   
   if(id %in% group_by){
-    cname <- paste(E, "Group", sep="_")
-    groups <- levels(tra[[cname]])
+    cname <- paste(id, "Group", sep="_")
+    groups <- unique(tra[[cname]])
     
     sample_depth <- vector(mode="list", length=length(groups))
     names(sample_depth) <- groups
     
     for (group in groups){
       sample_depth[[group]] <- sapply(ids, function(x){sum(tra[[id]]==x & tra[[cname]]==group)})
+      names(sample_depth[[group]]) <- ids
       
       if(id=="Time" | id=="Age")
       {
@@ -58,6 +59,7 @@ sample_depth_tra <- function(tra, id="Time", group_by=NA){
     }
   } else {
     sample_depth <- sapply(ids, function(x){sum(tra[[id]]==x)})
+    names(sample_depth) <- ids
     
     if(id=="Time" | id=="Age")
     {
