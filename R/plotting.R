@@ -64,7 +64,7 @@ make_sample_depth_plot <- function(tra, id="Time", group_by=NA){
     names(dat) <- groups
   
     for (group in groups){
-      dat[[group]] <- data.frame(sample_depth=sample_depth[[group]], id=levels(tra[[id]]), group=group)
+      dat[[group]] <- data.frame(sample_depth=sample_depth[[group]], id=names(sample_depth[[group]]), group=group)
     }
     
     dat <- Reduce(rbind, dat)

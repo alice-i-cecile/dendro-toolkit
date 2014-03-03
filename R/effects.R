@@ -17,14 +17,14 @@ est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
     
     # Geometric mean is log equivalent of the arithmetic mean
     if (link=="log"){
-      est_effect <- geomMean(data)
+      estim_effect <- geomMean(data)
     } else {
-      est_effect <- mean(data, na.rm=TRUE)
+      estim_effect <- mean(data, na.rm=TRUE)
     }
     
-    names (est_effect) <- id_i
+    names (estim_effect) <- id_i
     
-    return(est_effect)
+    return(estim_effect)
   }
   
   
@@ -34,9 +34,14 @@ est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
   } else {
     id_levels <- unique(tra[[id]])
   }
-  est_effect <- sapply(id_levels, estimate_effect)
+  estim_effect <- sapply(id_levels, estimate_effect)
   
-  return (est_effect)
+  # Ensure correct ordering
+  list_effect <- list(estim_effect)
+  names(list_effect) <- id
+  estim_effect <- sort_effects(list_effect, tra, group_by=NA)[[id]]
+  
+  return (estim_effect)
 }
 
 # Remove an effect from a tree ring array
@@ -288,7 +293,7 @@ make_skeleton_effects <- function(tra, model, group_by, link)
         
       }
     } else {
-      dim_i <- nlevels(tra[[i]])
+      dim_i <- length(unique(tra[[i]]))
       
       if (link=="log")
       {
@@ -298,9 +303,11 @@ make_skeleton_effects <- function(tra, model, group_by, link)
         effects[[i]] <-  rep.int(0,  dim_i)
       }
       
-      names(effects[[i]]) <- levels(tra[[i]])
+      names(effects[[i]]) <- unique(tra[[i]])
     }
   }
+  
+  effects <- sort_effects(effects, tra, group_by)
   
   return(effects)
   
@@ -353,7 +360,7 @@ est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
       names(se_list) <- groups
       
     } else {
-      e_list <- levels(resids[[E]])
+      e_list <- unique(resids[[E]])
       res_list <- lapply(e_list, grab_res, E=E)
       se_list <- sapply(res_list, mom_se)
       names(se_list) <- e_list
