@@ -215,7 +215,7 @@ make_effect_density_plot <- function(effects, id, link, group_by=NA){
         pdf <- dlnorm(x_ticks, meanlog=mean(log(effects[[id]][[group]])), sdlog=sd(log(effects[[id]][[group]])))
       }
       
-      pdf_data[[group]] <- data.frame(effect=x_ticks, density=pdat, group=group)
+      pdf_data[[group]] <- data.frame(effect=x_ticks, density=pdf, group=group)
     }
     
     pdf_data <- Reduce(rbind, pdf_data)
@@ -228,17 +228,17 @@ make_effect_density_plot <- function(effects, id, link, group_by=NA){
     
     # Estimate theoretical PDF
     if (link=="identity"){
-      pdat <- dnorm(x_ticks, mean=mean(effects[[id]]),sd=sd(effects[[id]]))    
+      pdf <- dnorm(x_ticks, mean=mean(effects[[id]]),sd=sd(effects[[id]]))    
     } else if (link=="log"){
-      pdat <- dlnorm(x_ticks, meanlog=mean(log(effects[[id]])), sdlog=sd(log(effects[[id]])))
+      pdf <- dlnorm(x_ticks, meanlog=mean(log(effects[[id]])), sdlog=sd(log(effects[[id]])))
     }
     
-    pdat_data <- data.frame(effect=x_ticks, density=pdat)
+    pdf_data <- data.frame(effect=x_ticks, density=pdf)
   }
 
   
   # Add PDF
-  my_plot <- my_plot + geom_area(data=pdat_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
+  my_plot <- my_plot + geom_area(data=pdf_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
   
   # Facet plot by group
   if(id %in% group_by)
@@ -359,23 +359,23 @@ make_residual_density_plot <- function(residuals, link="log", dep_var="Growth"){
   # Make the base graphic
   my_plot <- ggplot(data.frame(residuals=resid), aes(x=residuals)) + theme_bw() + ylab("Density estimate") + xlab("Residuals") + geom_density(colour="red", fill="red", alpha=0.5)
   
-  # Estimate idealized Pdat
+  # Estimate idealized pdf
   x_min <- min(min(resid), 0)
   x_max <- max(resid)
   
   x_ticks <- seq(from=x_min, to=x_max, length.out=100)
   
-  # Generate Pdat
+  # Generate pdf
   if (link=="identity"){
-    pdat <- dnorm(x_ticks, sd=sd(resid))    
+    pdf <- dnorm(x_ticks, sd=sd(resid))    
   } else if (link=="log"){
-    pdat <- dlnorm(x_ticks, sdlog=sd(log(resid)))
+    pdf <- dlnorm(x_ticks, sdlog=sd(log(resid)))
   }
   
-  pdat_data <- data.frame(effect=x_ticks, density=pdat)
+  pdf_data <- data.frame(effect=x_ticks, density=pdf)
   
-  # Add pdat information
-  my_plot <- my_plot + geom_area(data=pdat_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
+  # Add pdf information
+  my_plot <- my_plot + geom_area(data=pdf_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
 
   # Add line showing null value
   if (link=="log"){
