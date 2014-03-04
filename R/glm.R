@@ -7,7 +7,7 @@ standardize_glm <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
   # Construct formula for regression
   growth_formula <- as.formula(make_glm_formula(model, group_by, dep_var))
   
-  print ("Using a generalized linear model used to standardize data")
+  print ("Using a generalized linear model to standardize data")
   print (paste("Gaussian family, link is set to", link))
   print (growth_formula)
   
@@ -29,7 +29,19 @@ standardize_glm <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
 make_glm_formula <- function (model, group_by, dep_var)
 {
   dep_str <- dep_var
-  ind_str <- Reduce(function(...){paste(..., sep="+")}, c("0", model))
+  
+  if (any(model %in% group_by)){
+    # Code grouping effects as an interaction with no main effects
+    m_terms <- model
+    for (e in model){
+      if (e %in% group_by){
+        m_terms[which(m_terms==e)] <- paste0(e, "*", e, "_Group")
+      }
+    }
+    ind_str <- Reduce(function(...){paste(..., sep="+")}, c("0", m_terms))
+  } else {
+    ind_str <- Reduce(function(...){paste(..., sep="+")}, c("0", model))
+  }
   
   # Combine the two sides of the formula
   formula_str <- paste(dep_str, ind_str, sep="~")

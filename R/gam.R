@@ -10,7 +10,7 @@ standardize_gam <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
   # Construct formula for regression
   growth_formula <- as.formula(make_gam_formula(model, group_by, dep_var))
   
-  print ("Using a generalized additive model used to standardize data")
+  print ("Using a generalized additive model to standardize data")
   print (paste("Gaussian family, link is set to", link))
   print (growth_formula)
   
