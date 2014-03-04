@@ -1,5 +1,5 @@
 
-# Model fit statistics ####
+# Master function ####
 
 # Compute all the relevant model fit statistics for fixed-effects standardization
 model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim, k=NA)
@@ -52,6 +52,8 @@ model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim
   return(fit)
 }
 
+# Predicted and residuals ####
+
 # Predicted values
 predicted_tra <- function (effects, tra, model, group_by, link, dep_var)
 {
@@ -60,9 +62,17 @@ predicted_tra <- function (effects, tra, model, group_by, link, dep_var)
   predicted <- tra
   predicted[[dep_var]] <- 0
   
-  # Transform data according to link function
+  # Transform effects according to link
   if(link=="log"){
-    tra[[dep_var]] <- log(tra[[dep_var]])
+    
+    for (e in model){
+      if (e %in% group_by)
+      {
+        effects[[e]] <- lapply(effects[[e]], log)
+      } else {
+        effects[[e]] <- log(effects[[e]])
+      }
+    }
   }
   
   # Add effects one at a time
@@ -110,6 +120,8 @@ residuals_tra <- function (tra, predicted, link, dep_var)
   return (residuals)
 }
 
+# Data points and parameters ####
+
 # Number of data points in the model
 n_tra <- function (tra)
 {
@@ -153,6 +165,8 @@ k_tra <- function (tra, model, group_by=NA)
   
   return(k)
 }
+
+# Noise and R^2 ####
 
 # Calculate sigma, the level of dispersal in the noise PDF as the RMSE (the standard deviation of the residuals)
 sigma_tra <- function (residuals, link, dep_var)
@@ -199,6 +213,8 @@ rss_tra <- function (residuals, link, dep_var)
   
   return(rss)
 }
+
+# Likelihood and *IC ####
 
 # Log-likelihood
 llh_tra <- function (residuals, link, dep_var)
