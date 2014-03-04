@@ -52,18 +52,6 @@ standardize_tra <- function(tra, model=c("Age", "Time"), group_by=NA, link="log"
     k <- results$k
   }
   
-  # Check for 3 effect model
-  if (("Tree" %in% model) & ("Time" %in% model) & ("Age" %in% model))
-  {
-    if (post_hoc)
-    {
-      effects <- post_hoc_intercession(effects, tra, link)
-      warning("Tree-time-age model selected. Post-hoc effect selection was used to stabilize parameter estimates.")
-    } else {
-      warning("Tree-time-age model selected. Parameter estimates will be unreliable. Consider using post-hoc effect selection.")
-    }
-  }
-  
   # Standardization complete
   print("Standardization complete")
   
