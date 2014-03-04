@@ -20,7 +20,7 @@ make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA,link="
     tree_effect_age_plot <- make_tree_effect_age_plot(effects, se, dat$original, link, ci_size)
     tree_effect_year_plot <- make_tree_effect_year_plot(effects, se, dat$original, link, ci_size)
     
-    plots <- c(plots, list(tree_effect_plot=tree_effect_plot, tree_effect_density_plot=tree_effect_density_plot))
+    plots <- c(plots, list(tree_effect_plot=tree_effect_plot, tree_effect_age_plot=tree_effect_age_plot, tree_effect_year_plot=tree_effect_year_plot, tree_effect_density_plot=tree_effect_density_plot))
   }
   
   # Time effect
