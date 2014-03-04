@@ -14,7 +14,7 @@ make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA,link="
   # Tree effect
   if ("Tree" %in% names(effects))
   {
-    tree_effect_plot <- make_effect_plot(effects, se, "Tree", link, ci_size, group_by)
+    tree_effect_plot <- make_effect_plot(effects, se, "Tree", FALSE, link, ci_size, group_by)
     tree_effect_density_plot <- make_effect_density_plot(effects, "Tree", link, group_by)
     
     tree_effect_age_plot <- make_tree_effect_age_plot(effects, se, dat$original, link, ci_size)
@@ -141,7 +141,12 @@ make_effect_plot <- function(effects, se=NULL, id, temporal=FALSE, link="log", c
   }
   
   # Make the base graphic
-  my_plot <- ggplot(dat, aes(x=id,y=effect, ymax=upper, ymin=lower)) + theme_bw() + ylab(paste(id, "effect")) + xlab(id)
+  if(!is.null(se)){
+    my_plot <- ggplot(dat, aes(x=id,y=effect, ymax=upper, ymin=lower))
+  } else {
+    my_plot <- ggplot(dat, aes(x=id,y=effect))
+  }
+  my_plot <- my_plot + theme_bw() + ylab(paste(id, "effect")) + xlab(id)
   
   # Nontemporal data is unordered and works best as a bar graph or similar
   # Temporal data is ordered and should be a line graph
@@ -254,7 +259,7 @@ make_tree_effect_age_plot <- function(effects, se=NULL, tra, link, ci_size=0.95)
   
   # Transform standard errors for coefficients into confidence intervals
   if(!is.null(se)){
-    dat$se <- se[[id]]
+    dat$se <- se$Tree
     
     # qnorm requires % of values that are included in each tail
     # Therefore half should be missing on each side
@@ -262,20 +267,34 @@ make_tree_effect_age_plot <- function(effects, se=NULL, tra, link, ci_size=0.95)
     
     
     if (link=="identity"){
-      dat$upper <- dat$effect + dat$se*qnorm(ci_Z)
-      dat$lower <- dat$effect - dat$se*qnorm(ci_Z)
+      dat$upper <- dat$tree + dat$se*qnorm(ci_Z)
+      dat$lower <- dat$tree - dat$se*qnorm(ci_Z)
     } else if(link=="log"){
-      dat$upper <- exp(log(dat$effect) + dat$se*qnorm(ci_Z))
-      dat$lower <- exp(log(dat$effect) - dat$se*qnorm(ci_Z))
+      dat$upper <- exp(log(dat$tree) + dat$se*qnorm(ci_Z))
+      dat$lower <- exp(log(dat$tree) - dat$se*qnorm(ci_Z))
     }
   }
   
-  my_plot <- ggplot(dat, aes(x=age, y=tree,  ymax=upper, ymin=lower)) + geom_point() + geom_smooth() + theme_bw() + ylab("Tree effect") + xlab("Age at sampling") + geom_hline(y=1)
+  # Base plot
+  if (!is.null(se)){
+    my_plot <- ggplot(dat, aes(x=age, y=tree,  ymax=upper, ymin=lower))
+  } else {
+    my_plot <- ggplot(dat, aes(x=age, y=tree))
+  }
+   my_plot <- my_plot + geom_point() + geom_smooth() + theme_bw() + ylab("Tree effect") + xlab("Age at sampling")
   
   # Add linerange to show CI
   if(!is.null(se)){
     my_plot <- my_plot + geom_linerange()
   }
+  
+  # Horizontal line to show typical value
+  if (link=="log"){
+    my_plot <- my_plot + geom_hline(y=1)
+  } else {
+    my_plot <- my_plot + geom_hline(y=0)
+  }
+  
   
   return (my_plot)
 }
@@ -289,7 +308,7 @@ make_tree_effect_year_plot <- function(effects,  se=NULL, tra, link="log", ci_si
   
   # Transform standard errors for coefficients into confidence intervals
   if(!is.null(se)){
-    dat$se <- se[[id]]
+    dat$se <- se$Tree
     
     # qnorm requires % of values that are included in each tail
     # Therefore half should be missing on each side
@@ -297,19 +316,33 @@ make_tree_effect_year_plot <- function(effects,  se=NULL, tra, link="log", ci_si
     
     
     if (link=="identity"){
-      dat$upper <- dat$effect + dat$se*qnorm(ci_Z)
-      dat$lower <- dat$effect - dat$se*qnorm(ci_Z)
+      dat$upper <- dat$tree + dat$se*qnorm(ci_Z)
+      dat$lower <- dat$tree - dat$se*qnorm(ci_Z)
     } else if(link=="log"){
-      dat$upper <- exp(log(dat$effect) + dat$se*qnorm(ci_Z))
-      dat$lower <- exp(log(dat$effect) - dat$se*qnorm(ci_Z))
+      dat$upper <- exp(log(dat$tree) + dat$se*qnorm(ci_Z))
+      dat$lower <- exp(log(dat$tree) - dat$se*qnorm(ci_Z))
     }
   }
   
-  my_plot <- ggplot(dat, aes(x=birth_year, y=tree,  ymax=upper, ymin=lower)) + geom_point() + geom_smooth() + theme_bw() + ylab("Tree effect") + xlab("Year of birth") + geom_hline(y=1)
+  # Base plot
+  if (!is.null(se)){
+    my_plot <- ggplot(dat, aes(x=birth_year, y=tree,  ymax=upper, ymin=lower))
+  } else {
+    my_plot <- ggplot(dat, aes(x=birth_year, y=tree))
+  }
+  
+  my_plot <-my_plot + geom_point() + geom_smooth() + theme_bw() + ylab("Tree effect") + xlab("Year of birth")
   
   # Add linerange to show CI
   if(!is.null(se)){
     my_plot <- my_plot + geom_linerange()
+  }
+  
+  # Horizontal line to show typical value
+  if (link=="log"){
+    my_plot <- my_plot + geom_hline(y=1)
+  } else {
+    my_plot <- my_plot + geom_hline(y=0)
   }
   
   return (my_plot)
