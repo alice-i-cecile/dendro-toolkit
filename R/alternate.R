@@ -35,7 +35,7 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), group_by=NA, lin
     for (id in model){
       if (id %in% group_by)
       {
-        groups <- levels(tra[[paste(id, "Group", sep="_")]])
+        groups <- unique(tra[[paste(id, "Group", sep="_")]])
         for (group in groups)
         {
           # Estimate the effects across each dimension

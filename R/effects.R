@@ -272,10 +272,10 @@ make_skeleton_effects <- function(tra, model, group_by, link)
     {
       # Each group is a sub-list
       cname <- paste(i, "Group", sep="_")
-      effects[[i]] <- vector(mode="list", length=nlevels(tra[[cname]]))
-      names(effects[[i]]) <- levels(tra[[cname]])
+      effects[[i]] <- vector(mode="list", length=length(unique(tra[[cname]])))
+      names(effects[[i]]) <- unique(tra[[cname]])
       
-      for (j in levels(tra[[cname]]))
+      for (j in unique(tra[[cname]]))
       {
         dim_j <- length(unique(tra[tra[[cname]]==j,][[i]]))
         
