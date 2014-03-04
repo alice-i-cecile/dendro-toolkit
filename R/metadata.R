@@ -16,15 +16,21 @@ grab_birth_year <- function(i, tra)
 
 get_birth_years <- function(tra)
 {
-  birth_years <- sapply(unique(tra$Tree), grab_birth_year, tra=tra, sparse)
+  birth_years <- sapply(unique(tra$Tree), grab_birth_year, tra=tra)
   return (birth_years)
 }
 
 get_birth_index <- function(birth_year, tra)
 {
-  years <- sort(as.numeric(unique(tra$Time)))
+  years <- sort(as.numeric(as.character(unique(tra$Time))))
   
   year_index <- which(birth_year==years)
+  
+  # Account for out of range years
+  if (length(year_index)==0){
+    base_index <- which(years[1]==years)
+    year_index <- base_index - (years[1] - birth_year)
+  }
   age_index <- 1
   birth_index <- year_index - age_index
   
