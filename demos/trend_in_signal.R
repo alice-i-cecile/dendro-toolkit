@@ -1,7 +1,7 @@
 # Setting up effects ####
 set.seed(42)
 n_tree <- 20
-n_time <- 20
+n_time <- 50
 n_age <- n_time
 noise <- 0.1
 
@@ -88,9 +88,14 @@ save(trend_in_signal_dataset, file="./Data/trend_in_signal_dataset.RData")
 # Testing out various standardization options ####
 
 # Loading in relevant dataset
-# load(file="./Data/trend_in_signal_dataset.RData")
+load(file="./Data/trend_in_signal_dataset.RData")
+# data(trend_in_signal_dataset)
 
-data(trend_in_signal_dataset)
+true_effects <- trend_in_signal_dataset$true_effects
+
+complete_tra <- trend_in_signal_dataset$complete_tra
+random_incomplete_tra <- trend_in_signal_dataset$random_incomplete_tra
+realistic_incomplete_tra <- trend_in_signal_dataset$realistic_incomplete_tra
 
 # Check optimizers on the complete data
 seq_1 <- standardize_tra(complete_tra, optim="sequential")
