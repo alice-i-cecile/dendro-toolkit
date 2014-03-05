@@ -36,7 +36,7 @@ model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim
   } else{
     fit$k <- k_tra(tra, model, group_by)
   }
-  fit$sigma <- sigma_tra(fit$residuals, link, dep_var)
+  fit$sigma_sq <- sigma_sq_tra(fit$residuals, link, dep_var)
   
   fit$tss <- tss_tra(tra, link, dep_var)
   fit$rss <- rss_tra(fit$residuals, link, dep_var)
@@ -168,8 +168,8 @@ k_tra <- function (tra, model, group_by=NA)
 
 # Noise and R^2 ####
 
-# Calculate sigma, the level of dispersal in the noise PDF as the RMSE (the standard deviation of the residuals)
-sigma_tra <- function (residuals, link, dep_var)
+# Calculate sigma_sq, the level of dispersal in the noise PDF as the RMSE (the standard deviation of the residuals)
+sigma_sq_tra <- function (residuals, link, dep_var)
 {
   
   val <- residuals[[dep_var]]
@@ -178,10 +178,10 @@ sigma_tra <- function (residuals, link, dep_var)
     val <- log(val)
   }
   
-  # sigma <- sqrt(mean(val^2))
-  sigma <- sd(val)
+  # sigma_sq <- sqrt(mean(val^2))
+  sigma_sq <- sd(val, na.rm=T)
   
-  return(sigma)
+  return(sigma_sq)
 }
 
 # Total sum of squares
@@ -208,8 +208,8 @@ rss_tra <- function (residuals, link, dep_var)
     val <- log(val)
   }
   
-  mean_val <- mean(val)
-  rss <-sum((val-mean_val)^2)
+  mean_val <- mean(val, na.rm=T)
+  rss <-sum((val-mean_val)^2, na.rm=T)
   
   return(rss)
 }
@@ -220,18 +220,15 @@ rss_tra <- function (residuals, link, dep_var)
 llh_tra <- function (residuals, link, dep_var)
 {
   
-  sigma <- sigma_tra(residuals, link, dep_var)
+  sigma_sq <- sigma_sq_tra(residuals, link, dep_var)
+  
+  if (link=="log"){
+    residuals[[dep_var]] <- log(residuals[[dep_var]])
+  }
   
   # Likelihood is proportional to the probability of observing the data, given the parameters
-  if(link=="identity")
-  {
-    llh <- sum(dnorm(residuals[[dep_var]], sd=sigma, log=TRUE))
-  }
-  else
-  {
-    llh <- sum(dlnorm(residuals[[dep_var]], sdlog=sigma, log=TRUE))
-  }
-  
+  llh <- sum(exp(-residuals[[dep_var]]^2/(2*sigma_sq))/(2*pi*sigma_sq), na.rm=T)
+    
   return(llh)
   
 }
