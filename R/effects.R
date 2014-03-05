@@ -121,138 +121,98 @@ rescale_effects <- function (effects, link="log", group_by=NA)
 {
   # Set aside effects so we can grab names later
   rescaled_effects <- effects
-  
-  if (!is.na(group_by))
+
+  # Multiplicative models should be scaled such that the geometric mean of the secondary effects is 1
+  # So log transform, set mean to 0, then unlog
+  if (link=="log")
   {
-    # Multiplicative models should be scaled such that the geometric mean of the secondary effects is 1
-    # So log transform, set mean to 0, then unlog
-    if (link=="log")
-    {
-        rescaled_effects <- lapply(names(rescaled_effects), function(x){
-          if (x %in% group_by){ 
-            return(lapply(rescaled_effects[[x]], log))
-          } else {
-            return (log(rescaled_effects[[x]]))
-          }
-        })
-        names(rescaled_effects) <- names(effects)
-    }
-        
-    mean_effects <- lapply(names(rescaled_effects), function(x){
-      if (x %in% group_by){
-        return(mean(unlist(rescaled_effects[[x]]), na.rm=T))
-      } else {
-        return (mean(rescaled_effects[[x]], na.rm=T))
-      }
-    }
-    )
-    names(mean_effects) <- names(effects)
-    
-    # Scale Tree effect and Time effect to mean of 0
-    # Scale Age effect so sum of effects stays the same
-    
-    # If Age effect is missing, try to add magnitude information to I
-    # Otherwise return raw effects
-    if(!("Age" %in% names(effects)))
-    {
-      if (all(c("Tree", "Time") %in% names(effects))){
-        if ("Tree" %in% group_by){
-          rescaled_effects$Tree <- lapply(rescaled_effects$Tree, function(x){x+mean_effects$Time})
-        } else {
-          rescaled_effects$Tree <- rescaled_effects$Tree+mean_effects$Time
-        }
-        
-        if ("Time" %in% group_by){
-          rescaled_effects$Time <- lapply(rescaled_effects$Time, function(x){x-mean_effects$Time})
-        } else {
-          rescaled_effects$Time <- rescaled_effects$Time+mean_effects$Tree
-        }
-      }
-    } else {
-      # I
-      if ("Tree" %in% names(effects)){
-        if ("Tree" %in% group_by){
-          rescaled_effects$Tree <- lapply(rescaled_effects$Tree, function(x){x-mean_effects$Tree})
-        } else {
-          rescaled_effects$Tree <- rescaled_effects$Tree-mean_effects$Tree
-        }
-        
-        if ("Age" %in% group_by){
-          rescaled_effects$Age <- lapply(rescaled_effects$Age, function(x){x+mean_effects$Tree})
-        } else {
-          rescaled_effects$Age <- rescaled_effects$Age+mean_effects$Tree
-        }
-      }
-      
-      # T
-      if ("Time" %in% names(rescaled_effects)){
-        if ("Time" %in% group_by){
-          rescaled_effects$Time <- lapply(rescaled_effects$Time, function(x){x-mean_effects$Time})
-        } else {
-          rescaled_effects$Time <- rescaled_effects$Time-mean_effects$Time
-        }
-        
-        if ("Age" %in% group_by){
-          rescaled_effects$Age <- lapply(rescaled_effects$Age, function(x){x+mean_effects$Time})
-        } else {
-          rescaled_effects$Age <- rescaled_effects$Age+mean_effects$Time
-        }
-      }
-    }
-    
-    if (link=="log")
-    {
       rescaled_effects <- lapply(names(rescaled_effects), function(x){
-        if (x %in% group_by){
-          return(lapply(rescaled_effects[[x]], exp))
+        if (x %in% group_by){ 
+          return(lapply(rescaled_effects[[x]], log))
         } else {
-          return (exp(rescaled_effects[[x]]))
+          return (log(rescaled_effects[[x]]))
         }
       })
-    }
-  } else {
-    # Multiplicative models should be scaled such that the geometric mean of the secondary effects is 1
-    # So log transform, set mean to 0, then unlog
-    if (link=="log")
-    {
-      rescaled_effects <- lapply(rescaled_effects, log)
-    }
-    
-    mean_rescaled_effects <- lapply(rescaled_effects, mean, na.rm=T)  
-    
-    # Scale Tree effect and Time effect to mean of 0
-    # Scale Age effect so sum of effects stays the same
-    
-    # If Age effect is missing, try to add magnitude information to I
-    # Otherwise return raw effects
-    if(!("Age" %in% names(effects)))
-    {
-      if (all(c("Tree", "Time") %in% names(effects))){
-        rescaled_effects$Tree <- rescaled_effects$Tree-mean_effects$Tree
-        rescaled_effects$Time <- rescaled_effects$Time+mean_effects$Tree
-      } 
+      names(rescaled_effects) <- names(effects)
+  }
+      
+  mean_effects <- lapply(names(rescaled_effects), function(x){
+    if (x %in% group_by){
+      return(mean(unlist(rescaled_effects[[x]]), na.rm=T))
     } else {
-      # I
-      if ("Tree" %in% names(effects)){
-        rescaled_effects$Tree <- rescaled_effects$Tree-mean_effects$Tree
-        rescaled_effects$Age <- rescaled_effects$Age+mean_effects$Tree
+      return (mean(rescaled_effects[[x]], na.rm=T))
+    }
+  }
+  )
+  names(mean_effects) <- names(effects)
+  
+  # Scale Tree effect and Time effect to mean of 0
+  # Scale Age effect so sum of effects stays the same
+  
+  # If Age effect is missing, try to add magnitude information to I
+  # Otherwise return raw effects
+  if(!("Age" %in% names(effects)))
+  {
+    if (all(c("Tree", "Time") %in% names(effects))){
+      if ("Tree" %in% group_by){
+        rescaled_effects$Tree <- lapply(rescaled_effects$Tree, function(x){x+mean_effects$Time})
+      } else {
+        rescaled_effects$Tree <- rescaled_effects$Tree+mean_effects$Time
       }
       
-      # T
-      if ("Time" %in% names(effects)){
+      if ("Time" %in% group_by){
+        rescaled_effects$Time <- lapply(rescaled_effects$Time, function(x){x-mean_effects$Time})
+      } else {
         rescaled_effects$Time <- rescaled_effects$Time-mean_effects$Time
+      }
+    }
+  } else {
+    # I
+    if ("Tree" %in% names(effects)){
+      if ("Tree" %in% group_by){
+        rescaled_effects$Tree <- lapply(rescaled_effects$Tree, function(x){x-mean_effects$Tree})
+      } else {
+        rescaled_effects$Tree <- rescaled_effects$Tree-mean_effects$Tree
+      }
+      
+      if ("Age" %in% group_by){
+        rescaled_effects$Age <- lapply(rescaled_effects$Age, function(x){x+mean_effects$Tree})
+      } else {
+        rescaled_effects$Age <- rescaled_effects$Age+mean_effects$Tree
+      }
+    }
+    
+    # T
+    if ("Time" %in% names(rescaled_effects)){
+      if ("Time" %in% group_by){
+        rescaled_effects$Time <- lapply(rescaled_effects$Time, function(x){x-mean_effects$Time})
+      } else {
+        rescaled_effects$Time <- rescaled_effects$Time-mean_effects$Time
+      }
+      
+      if ("Age" %in% group_by){
+        rescaled_effects$Age <- lapply(rescaled_effects$Age, function(x){x+mean_effects$Time})
+      } else {
         rescaled_effects$Age <- rescaled_effects$Age+mean_effects$Time
       }
-    }  
-    if (link=="log")
-    {
-      rescaled_effects <- lapply(rescaled_effects, exp)
     }
   }
   
+  if (link=="log")
+  {
+    rescaled_effects <- lapply(names(rescaled_effects), function(x){
+      if (x %in% group_by){
+        return(lapply(rescaled_effects[[x]], exp))
+      } else {
+        return (exp(rescaled_effects[[x]]))
+      }
+    })
+  }
+  
+  # Reset first level names  
   names(rescaled_effects) <- names(effects)
   
-  return (effects)
+  return (rescaled_effects)
 
 }
 
@@ -338,7 +298,7 @@ est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
       groups <- names(skele[[E]])
       cname <- paste(E, "Group", sep="_")
       
-      e_list <- lapply(groups, function(group){unique(tra[tra[[cname]]==group,][[E]])})
+      e_list <- lapply(groups, function(group){unique(resids[resids[[cname]]==group,][[E]])})
       names(e_list) <- groups
       
       res_list <- lapply(groups, function(group)
