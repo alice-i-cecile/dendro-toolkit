@@ -1,7 +1,7 @@
 # Automation and plots in bulk ####
 # Make all of the possible plots at once!
 
-make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA,link="log", dep_var="Growth", ci_size=0.95){
+make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA, link="log", dep_var="Growth", ci_size=0.95){
   
   plots <- list()
   
@@ -26,7 +26,7 @@ make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA,link="
   # Time effect
   if ("Time" %in% names(effects))
   {
-    time_effect_plot <- make_effect_plot(effects, se, "Time", temporal=TRUE, link,  ci_size, group_by)
+    time_effect_plot <- make_effect_plot(effects, se, "Time", temporal=TRUE, link, ci_size, group_by)
     time_effect_density_plot <- make_effect_density_plot(effects, "Time", link, group_by)
     
     plots <- c(plots, list(time_effect_plot=time_effect_plot, time_effect_density_plot=time_effect_density_plot))
