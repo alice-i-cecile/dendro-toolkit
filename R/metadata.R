@@ -38,12 +38,12 @@ get_birth_index <- function(birth_year, tra)
 }
 
 # Get sample size for a characteristic ####
-sample_depth_tra <- function(tra, id="Time", group_by=NA){
+sample_depth_tra <- function(tra, id="Time", split=NA){
   
   ids <- unique(tra[[id]])
   
-  if(id %in% group_by){
-    cname <- paste(id, "Group", sep="_")
+  if(id %in% split){
+    cname <- paste(id, "Split", sep="_")
     groups <- unique(tra[[cname]])
     
     sample_depth <- vector(mode="list", length=length(groups))

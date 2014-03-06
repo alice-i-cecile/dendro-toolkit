@@ -1,21 +1,21 @@
 # Automation and plots in bulk ####
 # Make all of the possible plots at once!
 
-make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA, link="log", dep_var="Growth", ci_size=0.95){
+make_standardization_plots <- function(effects, se=NULL, dat, split=NA, link="log", dep_var="Growth", ci_size=0.95){
   
   plots <- list()
   
   # Sample depth
-  sample_depth_time_plot <- make_sample_depth_plot(dat$original, "Time", group_by)
-  sample_depth_age_plot <- make_sample_depth_plot(dat$original, "Age", group_by)
+  sample_depth_time_plot <- make_sample_depth_plot(dat$original, "Time", split)
+  sample_depth_age_plot <- make_sample_depth_plot(dat$original, "Age", split)
   
   plots <- c(plots, list(sample_depth_time_plot=sample_depth_time_plot, sample_depth_age_plot=sample_depth_age_plot))
   
   # Tree effect
   if ("Tree" %in% names(effects))
   {
-    tree_effect_plot <- make_effect_plot(effects, se, "Tree", FALSE, link, ci_size, group_by)
-    tree_effect_density_plot <- make_effect_density_plot(effects, "Tree", link, group_by)
+    tree_effect_plot <- make_effect_plot(effects, se, "Tree", FALSE, link, ci_size, split)
+    tree_effect_density_plot <- make_effect_density_plot(effects, "Tree", link, split)
     
     tree_effect_age_plot <- make_tree_effect_age_plot(effects, se, dat$original, link, ci_size)
     tree_effect_year_plot <- make_tree_effect_year_plot(effects, se, dat$original, link, ci_size)
@@ -26,8 +26,8 @@ make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA, link=
   # Time effect
   if ("Time" %in% names(effects))
   {
-    time_effect_plot <- make_effect_plot(effects, se, "Time", temporal=TRUE, link, ci_size, group_by)
-    time_effect_density_plot <- make_effect_density_plot(effects, "Time", link, group_by)
+    time_effect_plot <- make_effect_plot(effects, se, "Time", temporal=TRUE, link, ci_size, split)
+    time_effect_density_plot <- make_effect_density_plot(effects, "Time", link, split)
     
     plots <- c(plots, list(time_effect_plot=time_effect_plot, time_effect_density_plot=time_effect_density_plot))
   }
@@ -35,8 +35,8 @@ make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA, link=
   # Age effect
   if ("Age" %in% names(effects))
   {
-    age_effect_plot <- make_effect_plot(effects, se, "Age", temporal=TRUE, link, ci_size, group_by)
-    age_effect_density_plot <- make_effect_density_plot(effects, "Age", link, group_by)
+    age_effect_plot <- make_effect_plot(effects, se, "Age", temporal=TRUE, link, ci_size, split)
+    age_effect_density_plot <- make_effect_density_plot(effects, "Age", link, split)
     
     plots <- c(plots, list(age_effect_plot=age_effect_plot, age_effect_density_plot=age_effect_density_plot))
   }
@@ -52,12 +52,12 @@ make_standardization_plots <- function(effects, se=NULL, dat, group_by=NA, link=
 
 # Sample depth plotting ####
 # Only defined / useful for time and age
-make_sample_depth_plot <- function(tra, id="Time", group_by=NA){
+make_sample_depth_plot <- function(tra, id="Time", split=NA){
   
   # Extract and format sample depth
-  sample_depth <- sample_depth_tra(tra, id, group_by)
+  sample_depth <- sample_depth_tra(tra, id, split)
   
-  if(id %in% group_by)
+  if(id %in% split)
   {
     groups <- names (sample_depth)
     dat <- vector(mode="list", length=length(groups))
@@ -80,7 +80,7 @@ make_sample_depth_plot <- function(tra, id="Time", group_by=NA){
   my_plot <- ggplot(dat, aes(x=id, y=sample_depth)) + geom_area() + xlab(id) + ylab("Sample depth") + theme_bw()
   
   # Facet different groups
-  if(id %in% group_by)
+  if(id %in% split)
   {
     my_plot <- my_plot + facet_grid(group~.)
   }
@@ -91,10 +91,10 @@ make_sample_depth_plot <- function(tra, id="Time", group_by=NA){
 # Effects plotting ####
 
 # Simple plotting of effects
-make_effect_plot <- function(effects, se=NULL, id, temporal=FALSE, link="log", ci_size=0.95, group_by=NA){
+make_effect_plot <- function(effects, se=NULL, id, temporal=FALSE, link="log", ci_size=0.95, split=NA){
   
   # Load data into a data frame
-  if(id %in% group_by)
+  if(id %in% split)
   {
     dat <- vector(mode="list", length=length(effects[[id]]))
     groups <- names (effects[[id]])
@@ -167,7 +167,7 @@ make_effect_plot <- function(effects, se=NULL, id, temporal=FALSE, link="log", c
   }  
   
   # Facet plot by group
-  if(id %in% group_by)
+  if(id %in% split)
   {
     my_plot <- my_plot + facet_grid(group~.)
   }  
@@ -176,10 +176,10 @@ make_effect_plot <- function(effects, se=NULL, id, temporal=FALSE, link="log", c
 }
 
 # Looking at the frequency of each magnitude of effects
-make_effect_density_plot <- function(effects, id, link, group_by=NA){
+make_effect_density_plot <- function(effects, id, link, split=NA){
   
   # Load data into a data frame
-  if(id %in% group_by)
+  if(id %in% split)
   {
     dat <- vector(mode="list", length=length(effects[[id]]))
     groups <- names (effects[[id]])
@@ -198,7 +198,7 @@ make_effect_density_plot <- function(effects, id, link, group_by=NA){
   # Make the base graphic
   my_plot <- ggplot(dat, aes(x=effect)) + theme_bw() + ylab("Density estimate") + xlab(paste(id, "effect")) + geom_density(colour="red", fill="red", alpha=0.5)
     
-  if (id %in% group_by){
+  if (id %in% split){
     x_min <- min(min(unlist(effects[[id]])), 0)
     x_max <- max(unlist(effects[[id]]))
     
@@ -241,7 +241,7 @@ make_effect_density_plot <- function(effects, id, link, group_by=NA){
   my_plot <- my_plot + geom_area(data=pdf_data, aes(x=effect, y=density), colour="black", fill="black", alpha=0.5)
   
   # Facet plot by group
-  if(id %in% group_by)
+  if(id %in% split)
   {
     my_plot <- my_plot + facet_grid(group~.)
   }

@@ -1,14 +1,14 @@
 # GAM fixed effects standardization ####
 
 # Main GLM function
-standardize_gam <- function (tra, model=c("Time", "Age"), group_by=NA, link="log", dep_var="Growth", ...)
+standardize_gam <- function (tra, model=c("Time", "Age"), split=NA, link="log", dep_var="Growth", ...)
 {
   
   # Clean age info to ensure numeric form
   tra$Age <- as.numeric(as.character(tra$Age))
   
   # Construct formula for regression
-  growth_formula <- as.formula(make_gam_formula(model, group_by, dep_var))
+  growth_formula <- as.formula(make_gam_formula(model, split, dep_var))
   
   print ("Using a generalized additive model to standardize data")
   print (paste("Gaussian family, link is set to", link))
@@ -21,18 +21,18 @@ standardize_gam <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
   growth_model <- gam(growth_formula, family=family, data=tra, ...)
   
   # Extract estimates of the effect
-  effects <- extract_effects_gam(growth_model, model, group_by, link, tra)
+  effects <- extract_effects_gam(growth_model, model, split, link, tra)
   
   # Extract the number of degrees of freedom
   # Custom because of smoothing
-  k <- extract_k_gam(growth_model, tra, model, group_by)
+  k <- extract_k_gam(growth_model, tra, model, split)
   
   return (list(effects=effects, k=k))
   
 }
 
 # Formula construction for GAM standardization
-make_gam_formula <- function (model, group_by, dep_var)
+make_gam_formula <- function (model, split, dep_var)
 {
   dep_str <- dep_var
   
@@ -48,13 +48,13 @@ make_gam_formula <- function (model, group_by, dep_var)
 
 
 # Extracting effects for glm models
-extract_effects_gam <- function(growth_model, model, group_by, link, tra)
+extract_effects_gam <- function(growth_model, model, split, link, tra)
 {
   # Reset age index to factor
   tra$Age <- as.factor(tra$Age)
   
   # Skeleton effects for relisting coefficients
-  skele <- make_skeleton_effects(tra, model, group_by, link)
+  skele <- make_skeleton_effects(tra, model, split, link)
   
   # Grab the coefficients from the regression model
   effect_coef <- coef(growth_model)
@@ -118,7 +118,7 @@ extract_effects_gam <- function(growth_model, model, group_by, link, tra)
 # Number of parameters estimated (k)
 # Custom for GAM models
 # Borrows from k_tra()
-extract_k_gam <- function (growth_model, tra, model, group_by)
+extract_k_gam <- function (growth_model, tra, model, split)
 {
   
   # One parameter automatically for estimate of link

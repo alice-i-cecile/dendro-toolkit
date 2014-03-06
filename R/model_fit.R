@@ -2,7 +2,7 @@
 # Master function ####
 
 # Compute all the relevant model fit statistics for fixed-effects standardization
-model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim, k=NA)
+model_fit_tra <- function(effects, tra, model, split=NA, link, dep_var, optim, k=NA)
 {
   
   fit <- list()
@@ -25,7 +25,7 @@ model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim
     fit$residuals <- tra
     
   } else {
-    fit$predicted <- predicted_tra(effects, tra, model, group_by, link, dep_var)
+    fit$predicted <- predicted_tra(effects, tra, model, split, link, dep_var)
     fit$residuals <- residuals_tra (tra, fit$predicted, link, dep_var)
   }
   
@@ -34,7 +34,7 @@ model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim
   {
     fit$k <- k
   } else{
-    fit$k <- k_tra(tra, model, group_by)
+    fit$k <- k_tra(tra, model, split)
   }
   fit$sigma_sq <- sigma_sq_tra(fit$residuals, link, dep_var)
   
@@ -55,7 +55,7 @@ model_fit_tra <- function(effects, tra, model, group_by=NA, link, dep_var, optim
 # Predicted and residuals ####
 
 # Predicted values
-predicted_tra <- function (effects, tra, model, group_by, link, dep_var)
+predicted_tra <- function (effects, tra, model, split, link, dep_var)
 {
   
   # Set starting values to null value
@@ -66,7 +66,7 @@ predicted_tra <- function (effects, tra, model, group_by, link, dep_var)
   if(link=="log"){
     
     for (e in model){
-      if (e %in% group_by)
+      if (e %in% split)
       {
         effects[[e]] <- lapply(effects[[e]], log)
       } else {
@@ -80,9 +80,9 @@ predicted_tra <- function (effects, tra, model, group_by, link, dep_var)
   {
     for (e in model)
     {
-      if (e %in% group_by)
+      if (e %in% split)
       {
-        cname <- paste(e, "Group", sep="_")
+        cname <- paste(e, "Split", sep="_")
         group <- tra[r, cname]
         i <- as.character(tra[r, e])
         
@@ -132,7 +132,7 @@ n_tra <- function (tra)
 }
 
 # Number of parameters estimated (k)
-k_tra <- function (tra, model, group_by=NA)
+k_tra <- function (tra, model, split=NA)
 {
   
   # One parameter automatically for estimate of error term
@@ -141,9 +141,9 @@ k_tra <- function (tra, model, group_by=NA)
   # One parameter is estimated for each index of the effect vectors
   for (E in model)
   {
-    if (E %in% group_by)
+    if (E %in% split)
     {
-      cname <- paste(E, "Group", sep="_")
+      cname <- paste(E, "Split", sep="_")
       groups <- levels(tra[[cname]])
       
       # Each group adds unique parameters

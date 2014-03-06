@@ -9,7 +9,7 @@ est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
   {
     # Estimate using rows from relevant group
     if (!is.na(group)){
-      cname <- paste(id, "Group", sep="_")
+      cname <- paste(id, "Split", sep="_")
       data <- tra[tra[[id]]==id_i & tra[[cname]]==group, dep_var]
     } else {
       data <- tra[tra[[id]]==id_i, dep_var]
@@ -29,7 +29,7 @@ est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
   
   
   if (!is.na(group)){
-    cname <- paste(id, "Group", sep="_")
+    cname <- paste(id, "Split", sep="_")
     id_levels <- unique(tra[tra[[cname]]==group,][[id]])
   } else {
     id_levels <- unique(tra[[id]])
@@ -39,7 +39,7 @@ est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
   # Ensure correct ordering
   list_effect <- list(estim_effect)
   names(list_effect) <- id
-  estim_effect <- sort_effects(list_effect, tra, group_by=NA)[[id]]
+  estim_effect <- sort_effects(list_effect, tra, split=NA)[[id]]
   
   return (estim_effect)
 }
@@ -54,7 +54,7 @@ remove_effect <- function (tra, effect, id, link="log", dep_var="Growth", group=
   {
     # Only affect rows from relevant group
     if (!is.na(group)){
-      cname <- paste(id, "Group", sep="_")
+      cname <- paste(id, "Split", sep="_")
       relevant_rows <- tra[[id]]==effect_id & tra[[cname]]==group
     } else {
       relevant_rows <- tra[[id]]==effect_id
@@ -76,13 +76,13 @@ remove_effect <- function (tra, effect, id, link="log", dep_var="Growth", group=
 # Cleaning up effects ####
 
 # Correctly sort elements of the effect vectors
-sort_effects <- function(effects, tra, group_by=NA)
+sort_effects <- function(effects, tra, split=NA)
 {
   sorted_effects <- list()
   
   for (i in names(effects)){
     
-    if (i %in% group_by)
+    if (i %in% split)
     {
       for (j in names(effects[[i]])){
         effect_names <- names(effects[[i]][[j]])
@@ -117,7 +117,7 @@ sort_effects <- function(effects, tra, group_by=NA)
 }
 
 # Rescale effect vectors to canonical form
-rescale_effects <- function (effects, link="log", group_by=NA)
+rescale_effects <- function (effects, link="log", split=NA)
 {
   # Set aside effects so we can grab names later
   rescaled_effects <- effects
@@ -127,7 +127,7 @@ rescale_effects <- function (effects, link="log", group_by=NA)
   if (link=="log")
   {
       rescaled_effects <- lapply(names(rescaled_effects), function(x){
-        if (x %in% group_by){ 
+        if (x %in% split){ 
           return(lapply(rescaled_effects[[x]], log))
         } else {
           return (log(rescaled_effects[[x]]))
@@ -137,7 +137,7 @@ rescale_effects <- function (effects, link="log", group_by=NA)
   }
       
   mean_effects <- lapply(names(rescaled_effects), function(x){
-    if (x %in% group_by){
+    if (x %in% split){
       return(mean(unlist(rescaled_effects[[x]]), na.rm=T))
     } else {
       return (mean(rescaled_effects[[x]], na.rm=T))
@@ -154,13 +154,13 @@ rescale_effects <- function (effects, link="log", group_by=NA)
   if(!("Age" %in% names(effects)))
   {
     if (all(c("Tree", "Time") %in% names(effects))){
-      if ("Tree" %in% group_by){
+      if ("Tree" %in% split){
         rescaled_effects$Tree <- lapply(rescaled_effects$Tree, function(x){x+mean_effects$Time})
       } else {
         rescaled_effects$Tree <- rescaled_effects$Tree+mean_effects$Time
       }
       
-      if ("Time" %in% group_by){
+      if ("Time" %in% split){
         rescaled_effects$Time <- lapply(rescaled_effects$Time, function(x){x-mean_effects$Time})
       } else {
         rescaled_effects$Time <- rescaled_effects$Time-mean_effects$Time
@@ -169,13 +169,13 @@ rescale_effects <- function (effects, link="log", group_by=NA)
   } else {
     # I
     if ("Tree" %in% names(effects)){
-      if ("Tree" %in% group_by){
+      if ("Tree" %in% split){
         rescaled_effects$Tree <- lapply(rescaled_effects$Tree, function(x){x-mean_effects$Tree})
       } else {
         rescaled_effects$Tree <- rescaled_effects$Tree-mean_effects$Tree
       }
       
-      if ("Age" %in% group_by){
+      if ("Age" %in% split){
         rescaled_effects$Age <- lapply(rescaled_effects$Age, function(x){x+mean_effects$Tree})
       } else {
         rescaled_effects$Age <- rescaled_effects$Age+mean_effects$Tree
@@ -184,13 +184,13 @@ rescale_effects <- function (effects, link="log", group_by=NA)
     
     # T
     if ("Time" %in% names(rescaled_effects)){
-      if ("Time" %in% group_by){
+      if ("Time" %in% split){
         rescaled_effects$Time <- lapply(rescaled_effects$Time, function(x){x-mean_effects$Time})
       } else {
         rescaled_effects$Time <- rescaled_effects$Time-mean_effects$Time
       }
       
-      if ("Age" %in% group_by){
+      if ("Age" %in% split){
         rescaled_effects$Age <- lapply(rescaled_effects$Age, function(x){x+mean_effects$Time})
       } else {
         rescaled_effects$Age <- rescaled_effects$Age+mean_effects$Time
@@ -201,7 +201,7 @@ rescale_effects <- function (effects, link="log", group_by=NA)
   if (link=="log")
   {
     rescaled_effects <- lapply(names(rescaled_effects), function(x){
-      if (x %in% group_by){
+      if (x %in% split){
         return(lapply(rescaled_effects[[x]], exp))
       } else {
         return (exp(rescaled_effects[[x]]))
@@ -218,7 +218,7 @@ rescale_effects <- function (effects, link="log", group_by=NA)
 
 # Create skeleton effects ####
 
-make_skeleton_effects <- function(tra, model, group_by, link)
+make_skeleton_effects <- function(tra, model, split, link)
 {
   # Create initial list
   effects <- vector(mode="list", length=length(model))
@@ -226,10 +226,10 @@ make_skeleton_effects <- function(tra, model, group_by, link)
   
   # Dummy starting effects
   for (i in model){
-    if (i %in% group_by)
+    if (i %in% split)
     {
       # Each group is a sub-list
-      cname <- paste(i, "Group", sep="_")
+      cname <- paste(i, "Split", sep="_")
       effects[[i]] <- vector(mode="list", length=length(unique(tra[[cname]])))
       names(effects[[i]]) <- unique(tra[[cname]])
       
@@ -263,14 +263,14 @@ make_skeleton_effects <- function(tra, model, group_by, link)
     }
   }
   
-  effects <- sort_effects(effects, tra, group_by)
+  effects <- sort_effects(effects, tra, split)
   
   return(effects)
   
 }
 
 # Crude estimation of standard errors for each effect ####
-est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
+est_se <- function(resids, model, split=NA, link="log", dep_var="Growth"){
   
   # E: name of effect
   # e: index
@@ -284,7 +284,7 @@ est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
   
   grab_res <- function(e, E, group=NA){
     if (!is.na(group)){
-      cname <- paste(E, "Group", sep="_")
+      cname <- paste(E, "Split", sep="_")
       return(resids[resids[[E]]==e & resids[[cname]]==group, dep_var])
     } else {
       return(resids[resids[[E]]==e, dep_var])
@@ -293,10 +293,10 @@ est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
   
   effect_se <- function(E)
   {
-    if (E %in% group_by){
-      skele <- make_skeleton_effects(resids,model,group_by,link)
+    if (E %in% split){
+      skele <- make_skeleton_effects(resids,model,split,link)
       groups <- names(skele[[E]])
-      cname <- paste(E, "Group", sep="_")
+      cname <- paste(E, "Split", sep="_")
       
       e_list <- lapply(groups, function(group){unique(resids[resids[[cname]]==group,][[E]])})
       names(e_list) <- groups
@@ -328,7 +328,7 @@ est_se <- function(resids, model, group_by=NA, link="log", dep_var="Growth"){
   names(all_se) <- model
   
   # Sort so names line up
-  all_se <- sort_effects(all_se, resids, group_by)
+  all_se <- sort_effects(all_se, resids, split)
   
   return(all_se)
 }

@@ -1,7 +1,7 @@
 # Sequential standardization ####
 # Used in traditional regional curve standardization or flat detrending
 # effect_order: the order in which effects are sequentially estimated
-standardize_sequential <- function(tra, model=c("Age", "Time"), group_by=NA, link="log", dep_var="Growth")
+standardize_sequential <- function(tra, model=c("Age", "Time"), split=NA, link="log", dep_var="Growth")
 {
   
   # Create storage for the estimated effects
@@ -15,9 +15,9 @@ standardize_sequential <- function(tra, model=c("Age", "Time"), group_by=NA, lin
   # Effects are removed in the order they are listed in the model
   for (id in model)
   {
-    if (id %in% group_by)
+    if (id %in% split)
     {
-      groups <- levels(tra[[paste(id, "Group", sep="_")]])
+      groups <- levels(tra[[paste(id, "Split", sep="_")]])
       for (group in groups)
       {
         # Estimate an effect    
