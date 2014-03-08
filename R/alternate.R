@@ -1,11 +1,11 @@
 # Alternate optimization ####
 # Cleans up signal-free regional curve standardization algorithm and allows expansion to N dimensions
 
-standardize_alternate <- function (tra, model=c("Time", "Age"), group_by=NA, link="log", dep_var="Growth", cor_threshold=0.999999, max_iter=25)
+standardize_alternate <- function (tra, model=c("Time", "Age"), split=NA, link="log", dep_var="Growth", cor_threshold=0.999999, max_iter=25)
 {
   
   # Construct skeleton effects to scaffold algorithm
-  effects <- make_skeleton_effects(tra, model, group_by, link)
+  effects <- make_skeleton_effects(tra, model, split, link)
   
   # Don't attempt to fit null models
   if (length(model)==0)
@@ -33,9 +33,9 @@ standardize_alternate <- function (tra, model=c("Time", "Age"), group_by=NA, lin
     
     # Determine effect order from order in which model is given  
     for (id in model){
-      if (id %in% group_by)
+      if (id %in% split)
       {
-        groups <- unique(tra[[paste(id, "Group", sep="_")]])
+        groups <- unique(tra[[paste(id, "Split", sep="_")]])
         for (group in groups)
         {
           # Estimate the effects across each dimension

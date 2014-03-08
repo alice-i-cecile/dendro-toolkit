@@ -99,7 +99,7 @@ dist_tra_euclidean <- function(tra, group_by="Age", link="log", dep_var="Growth"
   
   return(d_matrix)
   
-}
+} 
 
 
 # Likelihood distance

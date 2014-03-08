@@ -1,16 +1,20 @@
 # Truncate tree ring array to ensure minimum sample depth ####
-truncate_tra <- function(tra, min_depth=1, id="Time", group_by=NA)
+truncate_tra <- function(tra, min_depth=1, id="Time", split=NA)
 {
-  depth <- sample_depth_tra(tra, id, group_by)
+  depth <- sample_depth_tra(tra, id, split)
   
-  if (id %in% group_by){
-    trunc_tra <- tra
+  if (id %in% split){
     cname <- paste(id, "Group", sep="_")
     valid_indices <- lapply(depth, function(x){names(x[x>=min_depth])})
     
+    subset_tra <- vector(mode="list", length=length(depth))
+    names(subset_tra) <- names(depth)
     for (group in names(depth)){
-      trunc_tra <- trunc_tra[trunc_tra[[id]] %in% valid_indices & trunc_tra[[cname]]==group,]
+      subset_tra[[group]] <- tra[tra[[id]] %in% valid_indices[[group]] & tra[[cname]]==group,]
     }
+    
+    trunc_tra <- Reduce(rbind, subset_tra)
+    
   } else {
     valid_indices <- names(depth[depth>=min_depth])
     

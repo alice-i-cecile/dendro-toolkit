@@ -1,11 +1,11 @@
 # GLM fixed effects standardization ####
 
 # Main GLM function
-standardize_glm <- function (tra, model=c("Time", "Age"), group_by=NA, link="log", dep_var="Growth", ...)
+standardize_glm <- function (tra, model=c("Time", "Age"), split=NA, link="log", dep_var="Growth", ...)
 {
   
   # Construct formula for regression
-  growth_formula <- as.formula(make_glm_formula(model, group_by, dep_var))
+  growth_formula <- as.formula(make_glm_formula(model, split, dep_var))
   
   print ("Using a generalized linear model to standardize data")
   print (paste("Gaussian family, link is set to", link))
@@ -19,23 +19,23 @@ standardize_glm <- function (tra, model=c("Time", "Age"), group_by=NA, link="log
     
   # Extract estimates of the effect
   # Correct way
-  effects <- extract_effects_glm(growth_model, model, group_by, link, tra)
+  effects <- extract_effects_glm(growth_model, model, split, link, tra)
   
   return (effects)
   
 }
 
 # Formula construction for GAM standardization
-make_glm_formula <- function (model, group_by, dep_var)
+make_glm_formula <- function (model, split, dep_var)
 {
   dep_str <- dep_var
   
-  if (any(model %in% group_by)){
+  if (any(model %in% split)){
     # Code grouping effects as an interaction with no main effects
     m_terms <- model
     for (e in model){
-      if (e %in% group_by){
-        m_terms[which(m_terms==e)] <- paste0(e, "*", e, "_Group")
+      if (e %in% split){
+        m_terms[which(m_terms==e)] <- paste0(e, "*", e, "_Split")
       }
     }
     ind_str <- Reduce(function(...){paste(..., sep="+")}, c("0", m_terms))
@@ -51,10 +51,10 @@ make_glm_formula <- function (model, group_by, dep_var)
 
 
 # Extracting effects for glm models
-extract_effects_glm <- function(growth_model, model, group_by, link, tra)
+extract_effects_glm <- function(growth_model, model, split, link, tra)
 {
   # Skeleton effects for relisting coefficients
-  skele <- make_skeleton_effects(tra, model, group_by, link)
+  skele <- make_skeleton_effects(tra, model, split, link)
     
   # Grab the coefficients from the regression model
   effect_coef <- coef(growth_model)
