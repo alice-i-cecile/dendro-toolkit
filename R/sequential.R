@@ -24,7 +24,7 @@ standardize_sequential <- function(tra, model=c("Age", "Time"), split=NA, link="
         effects[[id]][[group]] <- est_effect(working_tra, id, link, dep_var, group)
         
         # Remove the effect
-        working_tra <- remove_effect(working_tra, effects[[id]][[g]], id, link, dep_var, group)
+        working_tra <- remove_effect(working_tra, effects[[id]][[group]], id, link, dep_var, group)
       }
     } else 
     {
