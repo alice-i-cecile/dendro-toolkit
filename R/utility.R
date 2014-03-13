@@ -4,7 +4,7 @@ truncate_tra <- function(tra, min_depth=1, id="Time", split=NA)
   depth <- sample_depth_tra(tra, id, split)
   
   if (id %in% split){
-    cname <- paste(id, "Group", sep="_")
+    cname <- paste(id, "Split", sep="_")
     valid_indices <- lapply(depth, function(x){names(x[x>=min_depth])})
     
     subset_tra <- vector(mode="list", length=length(depth))
