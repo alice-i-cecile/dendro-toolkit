@@ -5,8 +5,8 @@ set.seed(42)
 n_tree <- 50
 
 # Time
-n_time <- 1000
-start_year <- 1000
+n_time <- 300
+start_year <- 1700
 end_year <- start_year + n_time - 1
 
 # Age
@@ -87,10 +87,14 @@ tra$Growth <- NA
 # Combine effects
 for (i in 1:nrow(tra)){
   Tree_i <- true_tree[tra[i, "Tree"]]
-  Time_i <- true_time[tra[i, "Time"]]
-  Age_i  <- true_age[[tra[i, "Age_Split"]]][tra[i, "Age"]]
+  Time_i <- true_time[as.character(tra[i, "Time"])]
+  Age_i  <- true_age[[tra[i, "Age_Split"]]][as.character(tra[i, "Age"])]
   tra[i, "Growth"] <- Tree_i * Time_i * Age_i
 }
+
+# Cleaning up ids to character form
+tra$Age <- as.character(tra$Age)
+tra$Time <- as.character(tra$Time)
 
 # Add noise
 tra$Growth <- tra$Growth * rlnorm(nrow(tra),sdlog=noise)
@@ -153,15 +157,15 @@ model_fit_2 <- data.frame(seq=unlist(seq_2$fit),
                           gam=unlist(gam_2$fit)
 )
 
-model_fit_3 <- data.frame(seq=unlist(seq_3$fit),
-                          alt=unlist(alt_3$fit),
-                          glm=unlist(glm_3$fit),
-                          gam=unlist(gam_3$fit)
-)
+# model_fit_3 <- data.frame(seq=unlist(seq_3$fit),
+#                           alt=unlist(alt_3$fit),
+#                           glm=unlist(glm_3$fit),
+#                           gam=unlist(gam_3$fit)
+# )
 
 print(model_fit_1)
 print(model_fit_2)
-print(model_fit_3)
+# print(model_fit_3)
 
 # Collating data ####
 
