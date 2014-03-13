@@ -52,6 +52,11 @@ standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", d
     k <- results$k
   }
   
+  else if(optim == "direct_search")
+  {
+    standardize_direct_search(tra, model, split, link, dep_var, ...)
+  }
+  
   # Standardization complete
   print("Standardization complete")
   

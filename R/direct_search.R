@@ -1,8 +1,11 @@
 standardize_direct_search <- function (tra, model=c("Time", "Age"), split=NA, link="log", dep_var="Growth", criteria="llh", ...)
 {
   
-  # Skeleton effects for starting and relisting
+  # Skeleton effects for relisting
   skele <- make_skeleton_effects(tra, model, split, link)
+  
+  # Start at sequential solution
+  starting <- standardize_sequential(tra, model, split, link, dep_var)
   
   # Function to optimize
   # Finds model fit given effects
@@ -25,7 +28,7 @@ standardize_direct_search <- function (tra, model=c("Time", "Age"), split=NA, li
   }
   
   # Search the solution space
-  search_solution <- optim(unlist(skele), search_wrapper)  
+  search_solution <- optim(unlist(starting), search_wrapper, method="CG",...)  
     
   # Reshape and return the optimal effects
   effects <- relist(search_solution$par, skele)
