@@ -1,10 +1,17 @@
 # Setting up effects ####
 set.seed(42)
-n_tree <- 20
-n_time <- 50
-n_age <- n_time
-noise <- 0.1
 
+# Trees
+n_tree <- 50
+
+# Time
+n_time <- 1000
+start_year <- 1000
+end_year <- start_year + n_time - 1
+
+# Age
+n_age <- n_time
+typical_lifespan <- 300
 constBAI_trend <- function (x, k=1, p0=0){
   # c is the constant basal area increment
   # p0 is the pith offset
@@ -20,114 +27,118 @@ logistic_trend <- function(x, a=1, k=1/20, t=0.1){
   return(out)
 }
 
+# Sampling
+sampling_weights <- 1 / (1+exp(1)^(-((-n_time/2 - 500):(n_time/2-1-500))/300))
+names(sampling_weights) <- start_year:end_year
+# plot(sampling_weights)
+
+# Noise
+noise <- 0.1
+
 # Generate effects
 true_tree <- rlnorm(n_tree, sdlog=0)
 names(true_tree) <- paste0("T", 1:n_tree)
 
-true_time <- rlnorm(n_time, sdlog=0.2) * sin((1:n_time)/30)
-names(true_time) <- (2001-n_time):(2000)
+true_time <- exp(rnorm(n_time, sd=0.2) + 0.15*sin((1:n_time)/30) + 1*sin((1:n_time)/500))
+names(true_time) <- start_year:end_year
+# plot(true_time)
 
 true_age <-  list(A=constBAI_trend(1:n_age), B=logistic_trend(1:n_age))
 true_age <- lapply(true_age, function(x){names(x) <- 1:n_age; x})
 
-# Combine effects
-true_effects <- list(Tree=true_tree, Time=true_time, Age=true_age)
-
-true_effects <- rescale_effects(true_effects, link="log", split="Age")
-
 # Assign trees to approriate age group
-split_df <- data.frame(Tree=names(true_tree), Age_Split=sample(c("A", "B"), size=n_tree, replace=T))
-
-# Make complete data set, balanced design ####
-
-effect_names <- lapply(true_effects, function(x){names(x)})
-
-complete_tra <- expand.grid(effect_names)
-
-complete_tra$Growth <- NA
-
-# Assign groups
-complete_tra <- merge(complete_tra, split_df, by="Tree")
+age_split_df <- data.frame(Tree=names(true_tree), Age_Split=sample(c("A", "B"), size=n_tree, replace=T))
 
 # Combine effects
-for (i in 1:nrow(complete_tra)){
-  Tree_i <- true_tree[complete_tra[i, "Tree"]]
-  Time_i <- true_time[complete_tra[i, "Time"]]
-  Age_i  <- true_age[[complete_tra[i, "Age_Split"]]][complete_tra[i, "Age"]]
-  complete_tra[i, "Growth"] <- Tree_i * Time_i * Age_i
-}
+raw_effects <- list(Tree=true_tree, Time=true_time, Age=true_age)
 
-# Add noise
-complete_tra$Growth <- complete_tra$Growth * rlnorm(nrow(complete_tra),sdlog=noise)
+# Setting up demographics and structure ####
 
-# Make incomplete, randomly unbalanced design ####
-# Typical trees would live for half of the chronology length
-# Therefore # of points remaining should be around |t|/2*|i|
-
-num_retained <- round(0.5*length(true_time)*length(true_tree))
-
-rows_retained <- sample.int(nrow(complete_tra), num_retained)
-
-random_incomplete_tra <- complete_tra[rows_retained,]
-
-# Make realistic incomplete unbalanced design ####
-# Trees were born at a random point in the chronology
-# Live until time of sampling
-
-date_of_birth <- sample(x=as.numeric(names(true_time)), size=length(true_tree), replace=TRUE)
+# When were the trees born
+date_of_birth <- sample(x=start_year:end_year, size=n_tree, replace=TRUE, prob=sampling_weights)
 names(date_of_birth) <- names(true_tree)
 
-year_of_sampling <- max(as.numeric(names(true_time)))
+# How long did they live for
+lifespan <- rpois(n=n_tree, lambda=typical_lifespan)
+names(lifespan) <- names(true_tree)
 
-get_valid_time_age_combos<- function(tree){
-  valid_time_age_combos <- data.frame(Tree=tree, Time=date_of_birth[tree]:year_of_sampling, Age=1:(year_of_sampling-date_of_birth[tree]+1))
+# Translate this information into a structure
+generate_demographic_structure <- function(tree){
+  timespan <- date_of_birth[tree]:(date_of_birth[tree] + lifespan[tree] - 1)
+  
+  valid_time_age_combos <- data.frame(Tree=tree, Time=timespan, Age=1:lifespan[tree])
   return(valid_time_age_combos)
 }
 
-valid_df <- Reduce(rbind, lapply(names(true_tree), get_valid_time_age_combos))
+tra_structure <- Reduce(rbind, lapply(names(true_tree), generate_demographic_structure))
 
-# Select rows on the basis of ID
-valid_df$ID <- paste0(valid_df$Tree, valid_df$Time, valid_df$Age)
-complete_tra$ID <- paste0(complete_tra$Tree, complete_tra$Time, complete_tra$Age)
+# Exclude data points from after the year of sampling
+tra_structure <- tra_structure[!(tra_structure$Time > end_year), ]
 
-# Extract the final_values
-realistic_incomplete_tra <- complete_tra[complete_tra$ID %in% valid_df$ID, ]
-realistic_incomplete_tra <- realistic_incomplete_tra[-which(names(realistic_incomplete_tra)=="ID")]
+# Finalizing dataset ####
 
-# Saving datasets ####
-trend_in_signal_dataset <- list(true_effects=true_effects, complete_tra=complete_tra, random_incomplete_tra=random_incomplete_tra,  realistic_incomplete_tra=realistic_incomplete_tra)
+# Adding information on age split
+tra_structure <- merge(tra_structure, age_split_df, by="Tree")
 
-save(trend_in_signal_dataset, file="./Data/trend_in_signal_dataset.RData")
+# Setup final tree ring array
+tra <- tra_structure
+tra$Growth <- NA
+
+# Combine effects
+for (i in 1:nrow(tra)){
+  Tree_i <- true_tree[tra[i, "Tree"]]
+  Time_i <- true_time[tra[i, "Time"]]
+  Age_i  <- true_age[[tra[i, "Age_Split"]]][tra[i, "Age"]]
+  tra[i, "Growth"] <- Tree_i * Time_i * Age_i
+}
+
+# Add noise
+tra$Growth <- tra$Growth * rlnorm(nrow(tra),sdlog=noise)
+
+# Truncate true effects to match structure
+skele_effects <- make_skeleton_effects(tra, model=c("Tree", "Time", "Age"), split="Age", link="log")
+
+true_effects <- rescale_effects(synchronize_effects(raw_effects, skele_effects, "Age"), link="log", split="Age")
+
+# Saving dataset ####
+segment_length_curse_dataset <- list(true_effects=true_effects, tra=tra)
+
+save(segment_length_curse_dataset, file="./Data/segment_length_curse_dataset.RData")
+
+# Loading in relevant dataset ####
+load(file="./Data/segment_length_curse_dataset.RData")
+# data(segment_length_curse_dataset)
+
+true_effects <- segment_length_curse_dataset$true_effects
+
+tra <- segment_length_curse_dataset$tra
+
+# Cleaning dataset ####
+
+# Truncate by time
+tra <- truncate_tra(tra, min_depth=3, id="Time", split="Age")
+
+# Truncate by age
+tra <- truncate_tra(tra, min_depth=3, id="Age", split="Age")
+
+# Clean up true effects to match
+trunc_skele_effects <- make_skeleton_effects(tra, model=c("Tree", "Time", "Age"), split="Age", link="log")
+
+true_effects <- rescale_effects(synchronize_effects(true_effects, trunc_skele_effects, "Age"), link="log", split="Age")
 
 # Testing out various standardization options ####
 
-# Loading in relevant dataset
-load(file="./Data/trend_in_signal_dataset.RData")
-# data(trend_in_signal_dataset)
+# No splitting
+seq_1 <- standardize_tra(tra, optim="sequential")
+alt_1 <- standardize_tra(tra, optim="alternate")
+glm_1 <- standardize_tra(tra, optim="glm")
+gam_1 <- standardize_tra(tra, optim="gam")
 
-true_effects <- trend_in_signal_dataset$true_effects
-
-complete_tra <- trend_in_signal_dataset$complete_tra
-random_incomplete_tra <- trend_in_signal_dataset$random_incomplete_tra
-realistic_incomplete_tra <- trend_in_signal_dataset$realistic_incomplete_tra
-
-# Check optimizers on the complete data
-seq_1 <- standardize_tra(complete_tra, optim="sequential")
-alt_1 <- standardize_tra(complete_tra, optim="alternate")
-glm_1 <- standardize_tra(complete_tra, optim="glm")
-gam_1 <- standardize_tra(complete_tra, optim="gam")
-
-# Check optimizers on the random incomplete data
-seq_2 <- standardize_tra(random_incomplete_tra, optim="sequential")
-alt_2 <- standardize_tra(random_incomplete_tra, optim="alternate")
-glm_2 <- standardize_tra(random_incomplete_tra, optim="glm")
-gam_2 <- standardize_tra(random_incomplete_tra, optim="gam")
-
-# Check optimizers on the random realistic data
-seq_3 <- standardize_tra(realistic_incomplete_tra, optim="sequential")
-alt_3 <- standardize_tra(realistic_incomplete_tra, optim="alternate")
-glm_3 <- standardize_tra(realistic_incomplete_tra, optim="glm")
-gam_3 <- standardize_tra(realistic_incomplete_tra, optim="gam")
+# True splitting
+seq_2 <- standardize_tra(tra, optim="sequential", split="Age")
+alt_2 <- standardize_tra(tra, optim="alternate", split="Age")
+glm_2 <- standardize_tra(tra, optim="glm", split="Age")
+gam_2 <- standardize_tra(tra, optim="gam", split="Age")
 
 # Model fit ####
 model_fit_1 <- data.frame(seq=unlist(seq_1$fit),
@@ -183,14 +194,14 @@ Age_2 <- data.frame(effect=c(true_effects$Age, seq_2$effects$Age, alt_2$effects$
 # Case 3
 # Tree_3 <- data.frame(effect=c(true_effects$Tree, seq_3$effects$Tree, alt_3$effects$Tree, glm_3$effects$Tree, gam_3$effects$Tree), model=Tree_model, id=Tree_id, case=3)
 
-Time_3 <- data.frame(effect=c(true_effects$Time, seq_3$effects$Time, alt_3$effects$Time, glm_3$effects$Time, gam_3$effects$Time), model=Time_model, id=Time_id, case=3)
-
-Age_3 <- data.frame(effect=c(true_effects$Age, seq_3$effects$Age, alt_3$effects$Age, glm_3$effects$Age, gam_3$effects$Age), model=Age_model, id=Age_id, case=3)
+# Time_3 <- data.frame(effect=c(true_effects$Time, seq_3$effects$Time, alt_3$effects$Time, glm_3$effects$Time, gam_3$effects$Time), model=Time_model, id=Time_id, case=3)
+# 
+# Age_3 <- data.frame(effect=c(true_effects$Age, seq_3$effects$Age, alt_3$effects$Age, glm_3$effects$Age, gam_3$effects$Age), model=Age_model, id=Age_id, case=3)
 
 # Collating cases
 # Tree_df <- rbind(Tree_1, Tree_2, Tree_3)
-Time_df <- rbind(Time_1, Time_2, Time_3)
-Age_df <- rbind(Age_1, Age_2, Age_3)
+Time_df <- rbind(Time_1, Time_2)#, Time_3)
+Age_df <- rbind(Age_1, Age_2)#, Age_3)
 
 Time_df$id <- as.numeric(as.character(Time_df$id))
 Age_df$id <- as.numeric(as.character(Age_df$id))
@@ -226,23 +237,3 @@ print(Age_raw_plot)
 # print(Tree_scatter_plot)
 print(Time_ratio_plot)
 print(Age_ratio_plot)
-
-# Timing ####
-
-# Check optimizers on the complete data
-system.time(standardize_tra(complete_tra, optim="sequential", make_plot=FALSE))
-system.time(standardize_tra(complete_tra, optim="alternate", make_plot=FALSE))
-system.time(standardize_tra(complete_tra, optim="glm", make_plot=FALSE))
-system.time(standardize_tra(complete_tra, optim="gam", make_plot=FALSE))
-
-# Check optimizers on the random incomplete data
-system.time(standardize_tra(random_incomplete_tra, optim="sequential", make_plot=FALSE))
-system.time(standardize_tra(random_incomplete_tra, optim="alternate", make_plot=FALSE))
-system.time(standardize_tra(random_incomplete_tra, optim="glm", make_plot=FALSE))
-system.time(standardize_tra(random_incomplete_tra, optim="gam", make_plot=FALSE))
-
-# Check optimizers on the random realistic data
-system.time(standardize_tra(realistic_incomplete_tra, optim="sequential", make_plot=FALSE))
-system.time(standardize_tra(realistic_incomplete_tra, optim="alternate", make_plot=FALSE))
-system.time(standardize_tra(realistic_incomplete_tra, optim="glm", make_plot=FALSE))
-system.time(standardize_tra(realistic_incomplete_tra, optim="gam", make_plot=FALSE))
