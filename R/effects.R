@@ -269,6 +269,30 @@ make_skeleton_effects <- function(tra, model, split, link)
   
 }
 
+# Synchronize effects ####
+synchronize_effects <- function(effects, skele, split){
+  
+  synch_effect <- function(id){
+    if (id %in% split){
+      groups <- names(skele[[id]])
+      synched <- list()
+      for (group in groups){
+        synched[[group]] <- effects[[id]][[group]][names(effects[[id]][[group]]) %in% names(skele[[id]][[group]])]
+      }
+    } else {
+      synched <- effects[[id]][names(effects[[id]]) %in% names(skele[[id]])]
+    }
+    
+    return(synched)
+    
+  }
+    
+  all_synched <- lapply(names(effects), synch_effect)
+  names(all_synched) <- names(effects)
+  
+  return(all_synched)
+}
+
 # Crude estimation of standard errors for each effect ####
 est_se <- function(resids, model, split=NA, link="log", dep_var="Growth"){
   
@@ -332,3 +356,4 @@ est_se <- function(resids, model, split=NA, link="log", dep_var="Growth"){
   
   return(all_se)
 }
+
