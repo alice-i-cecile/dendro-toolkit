@@ -11,7 +11,7 @@ standardize_gam <- function (tra, model=c("Time", "Age"), split=NA, link="log", 
   growth_formula <- as.formula(make_gam_formula(model, split, dep_var))
   
   print ("Using a generalized additive model to standardize data")
-  print (paste("Gaussian family, link is set to", link))
+  print (paste("Gaussian family with a", link, "link"))
   print (growth_formula)
   
   # Set family to use appropriate link function
