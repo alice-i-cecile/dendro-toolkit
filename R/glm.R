@@ -25,7 +25,7 @@ standardize_glm <- function (tra, model=c("Time", "Age"), split=NA, link="log", 
   
 }
 
-# Formula construction for GAM standardization
+# Formula construction for GLM standardization
 make_glm_formula <- function (model, split, dep_var)
 {
   dep_str <- dep_var
@@ -50,7 +50,7 @@ make_glm_formula <- function (model, split, dep_var)
 }
 
 
-# Extracting effects for glm models
+# Extracting effects for GLM models
 extract_effects_glm <- function(growth_model, model, split, link, tra)
 {
   # Skeleton effects for relisting coefficients
