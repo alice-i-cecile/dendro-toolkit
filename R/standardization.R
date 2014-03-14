@@ -15,19 +15,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", d
     # Raise a warning if negative values found for multiplicative models
     if (link == "log")
     {
-      stop("Zero or negative values cannot be use. Estimated effects will not be stable.")
-    }
-  }
-  
-  # Data cleaning
-  # Ensure groups and ids are formatted as factors
-  for (id in model){
-    tra[[id]] <- as.factor(tra[[id]])
-  }
-  if (!is.na(split)){
-    for (g in split){
-      cname <- paste(g, "Split", sep="_")
-      tra[[cname]] <- as.factor(tra[[cname]])
+      stop("Zero or negative values cannot be used. Estimated effects will not be stable.")
     }
   }
 
