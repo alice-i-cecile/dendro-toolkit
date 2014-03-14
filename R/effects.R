@@ -22,8 +22,6 @@ est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
       estim_effect <- mean(data, na.rm=TRUE)
     }
     
-    names (estim_effect) <- id_i
-    
     return(estim_effect)
   }
   
@@ -353,7 +351,7 @@ est_se <- function(resids, model, split=NA, link="log", dep_var="Growth"){
   
   # Sort so names line up
   all_se <- sort_effects(all_se, resids, split)
-  
+    
   return(all_se)
 }
 
