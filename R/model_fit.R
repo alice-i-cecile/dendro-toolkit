@@ -158,10 +158,10 @@ k_tra <- function (tra, model, split=NA)
   }
   
   # Information about some parameters is lost due to rescaling (dummy variable trap)
+  # Null models have only one parameter
   num_effects <- length(model)
   
-  k <- ifelse (num_effects > 0, k - (num_effects-1), 0)
-  
+  k <- ifelse (num_effects > 0, k - (num_effects-1), 1)
   
   return(k)
 }
