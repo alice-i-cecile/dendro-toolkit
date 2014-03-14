@@ -83,7 +83,7 @@ predicted_tra <- function (effects, tra, model, split, link, dep_var)
       if (e %in% split)
       {
         cname <- paste(e, "Split", sep="_")
-        group <- tra[r, cname]
+        group <- as.character(tra[r, cname])
         i <- as.character(tra[r, e])
         
         predicted[r, dep_var] <- predicted[r, dep_var] + effects[[e]][[group]][i]
