@@ -23,9 +23,6 @@ standardize_gam <- function (tra, model=c("Time", "Age"), split=NA, link="log", 
   # Estimate the growth model
   growth_model <- gam(growth_formula, family=family, data=tra, ...)
   
-  print(growth_model)
-  print(summary(growth_model))
-  
   # Extract estimates of the effect
   effects <- extract_effects_gam(growth_model, model, split, link, tra)
   
