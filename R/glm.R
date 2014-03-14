@@ -17,8 +17,7 @@ standardize_glm <- function (tra, model=c("Time", "Age"), split=NA, link="log", 
   # Estimate the growth model
   growth_model <- glm(growth_formula, family=family, data=tra, ...)
     
-  # Extract estimates of the effect
-  # Correct way
+  # Extract estimates of the effects
   effects <- extract_effects_glm(growth_model, model, split, link, tra)
   
   return (effects)
@@ -106,6 +105,43 @@ extract_effects_glm <- function(growth_model, model, split, link, tra)
     
     names(effect_coef)[e_id] <- paste(e, str_group[e_id], str_id[e_id], sep=".")
     
+    
+    # If only one value is present at a certain level
+    # GLM assigns it to base value
+    # Even if it's not...
+    
+    # Find singleton levels
+    e_levels <- sapply(skele[[e]], names)
+    counts <- count(unlist(e_levels))
+    
+    singletons <- counts[counts$freq==1,"x"]
+    
+    # Figure out where they occur
+    locations <- sapply(singletons, function(s)
+      {
+        group <- which(sapply(e_levels, function(g)
+          {
+            s %in% g
+          }
+        ))
+        return(names(group))
+      }
+    )
+    
+    # Correct names for singleton levels
+    correction_df <- data.frame(locations, singletons)
+    
+    for (i in 1:nrow(correction_df)){
+      na_location <- which(names(coef(growth_model))==paste0(e, singletons[i]))
+      na_name <- names(effect_coef[na_location])
+      
+      real_name <- paste(e, locations[i], singletons[i], sep=".")
+      real_location <- which(names(effect_coef)==real_name)
+      
+      effect_coef[real_location] <- effect_coef[na_location]
+      effect_coef[na_location] <- NA
+    }
+    
   }
   
   # Fix the names of unsplit effects
@@ -158,7 +194,9 @@ extract_effects_glm <- function(growth_model, model, split, link, tra)
     for (group in groups){
       if (group != base_group){
         base <-  effect_b[names(effects[[e]][[group]])]
-        effects[[e]][[group]] <- base + effects[[e]][[group]]
+        # Base value will be missing in the case of singletons
+        base[is.na(base)] <- 0
+        effects[[e]][[group]] <- effects[[e]][[group]] + base
       }
     }
   }
@@ -174,8 +212,6 @@ extract_effects_glm <- function(growth_model, model, split, link, tra)
     })
     names(effects) <- names(skele)
   }
-  
-  
   
   return(effects)
     

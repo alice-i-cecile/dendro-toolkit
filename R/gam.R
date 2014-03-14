@@ -40,6 +40,9 @@ standardize_gam <- function (tra, model=c("Time", "Age"), split=NA, link="log", 
 # Simple factor smooth: s(Age, by=Age_Split)
 # Factor smooth basis: s(Age, Age_Split, bs="fs")
 
+# Changing spline basis to "cr" (cubic regression) improves performance
+# But less accurate than "tp"
+
 make_gam_formula <- function (model, split, dep_var)
 {
   dep_str <- dep_var
@@ -51,7 +54,7 @@ make_gam_formula <- function (model, split, dep_var)
     for (e in model){
       if (e %in% split){
         if (e == "Age"){
-          m_terms[which(m_terms=="Age")] <- "s(Age, by=Age_Split,...)"
+          m_terms[which(m_terms=="Age")] <- "s(Age, by=Age_Split, bs=\"cr\", ...)"
         } else {
           m_terms[which(m_terms==e)] <- paste0(e, "*", e, "_Split")
         }
@@ -60,7 +63,7 @@ make_gam_formula <- function (model, split, dep_var)
     ind_str <- Reduce(function(...){paste(..., sep="+")}, c("0", m_terms))
   } else {
     ind_effects <- c("0", model)
-    ind_effects <- str_replace(ind_effects, "Age", "s(Age, ...)")
+    ind_effects <- str_replace(ind_effects, "Age", "s(Age, bs=\"cr\", ...)")
     ind_str <- Reduce(function(...){paste(..., sep="+")}, ind_effects)
   }
   
@@ -81,10 +84,6 @@ extract_effects_gam <- function(growth_model, model, split, link, tra)
   
   # Grab the coefficients from the regression model
   effect_coef <- coef(growth_model)
-  
-  # Smoothed coefficients are not what we're looking for, discard them
-  smooth_coef <- sapply(names(effect_coef), str_detect, pattern="s(.*)")
-  effect_coef <- effect_coef[!smooth_coef]
   
   # Fix the names for split effects
   for (e in reduced_model[reduced_model %in% split]){
@@ -133,10 +132,47 @@ extract_effects_gam <- function(growth_model, model, split, link, tra)
     
     names(effect_coef)[e_id] <- paste(e, str_group[e_id], str_id[e_id], sep=".")
     
+    
+    # If only one value is present at a certain level
+    # GLM assigns it to base value
+    # Even if it's not...
+    
+    # Find singleton levels
+    e_levels <- sapply(skele[[e]], names)
+    counts <- count(unlist(e_levels))
+    
+    singletons <- counts[counts$freq==1,"x"]
+    
+    # Figure out where they occur
+    locations <- sapply(singletons, function(s)
+    {
+      group <- which(sapply(e_levels, function(g)
+      {
+        s %in% g
+      }
+      ))
+      return(names(group))
+    }
+    )
+    
+    # Correct names for singleton levels
+    correction_df <- data.frame(locations, singletons)
+    
+    for (i in 1:nrow(correction_df)){
+      na_location <- which(names(coef(growth_model))==paste0(e, singletons[i]))
+      na_name <- names(effect_coef[na_location])
+      
+      real_name <- paste(e, locations[i], singletons[i], sep=".")
+      real_location <- which(names(effect_coef)==real_name)
+      
+      effect_coef[real_location] <- effect_coef[na_location]
+      effect_coef[na_location] <- NA
+    }
+    
   }
   
   # Fix the names of unsplit effects
-  for (e in reduced_model[!(reduced_model %in% split)]){
+  for (e in model[!(model %in% split)]){
     e_id <- str_detect(names(effect_coef), e)
     
     names(effect_coef)[e_id] <- str_replace(names(effect_coef)[e_id], e, paste0(e, "."))
@@ -185,7 +221,9 @@ extract_effects_gam <- function(growth_model, model, split, link, tra)
     for (group in groups){
       if (group != base_group){
         base <-  effect_b[names(effects[[e]][[group]])]
-        effects[[e]][[group]] <- base + effects[[e]][[group]]
+        # Base value will be missing in the case of singletons
+        base[is.na(base)] <- 0
+        effects[[e]][[group]] <- effects[[e]][[group]] + base
       }
     }
   }
