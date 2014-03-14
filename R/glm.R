@@ -140,7 +140,7 @@ extract_effects_glm <- function(growth_model, model, split, link, tra)
     
     for (group in groups){
       if (group != base_group){
-        base <-  effect_b[names(effect_g)]
+        base <-  effect_b[names(effects[[e]][[group]])]
         effects[[e]][[group]] <- base + effects[[e]][[group]]
       }
     }
