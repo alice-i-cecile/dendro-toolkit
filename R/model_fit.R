@@ -153,7 +153,7 @@ k_tra <- function (tra, model, split=NA)
       }
     } else 
     {
-      k <- k + nlevels (tra[[E]])  
+      k <- k + length(unique(tra[[E]]))  
     }
   }
   
