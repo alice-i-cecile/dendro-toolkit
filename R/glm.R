@@ -135,8 +135,25 @@ extract_effects_glm <- function(growth_model, model, split, link, tra)
   # Correctly combine base values and interaction term for split effects
   for (e in model[model %in% split]){
     groups <- names(effects[[e]])
-    base_group <- groups[1]
+
+    # Identify base group
+    # Grab all names within the relevant effect
+    all_e <- str_match_all(names(coef(growth_model)), paste0(e,".*"))
+    
+    # Find included groups
+    raw_groups <- lapply(all_e, str_match, pattern=paste0(split_name, ".*"))
+    raw_group_names <- unlist(lapply(raw_groups, str_replace, pattern=split_name, replacement=""))
+    inc_groups <- unique(raw_group_names[!is.na(raw_group_names)])    
+    
+    # Find all groups for the relevant effect
+    all_groups <- names(skele[[e]])
+    
+    # Determine base group by process of elimination
+    base_group <- all_groups[!(all_groups %in% inc_groups)]
+    
+    # Add base effect to interactions
     effect_b <- effects[[e]][[base_group]]
+    
     
     for (group in groups){
       if (group != base_group){
