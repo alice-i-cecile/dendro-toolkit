@@ -17,7 +17,7 @@ standardize_sequential <- function(tra, model=c("Age", "Time"), split=NA, link="
   {
     if (id %in% split)
     {
-      groups <- levels(tra[[paste(id, "Split", sep="_")]])
+      groups <- unique(tra[[paste(id, "Split", sep="_")]])
       for (group in groups)
       {
         # Estimate an effect    
