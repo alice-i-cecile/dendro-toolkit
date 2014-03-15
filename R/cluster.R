@@ -1,39 +1,257 @@
-# Clustering based on residuals ####
+# Relevant to paper!
+# Specifically, the Mclust( ) function in the mclust package selects the optimal model according to BIC for EM initialized by hierarchical clustering for parameterized Gaussian mixture models.
 
-generate_clusters <- function(tra, num_groups=2, group_by="Age", link="log", distance="euclidean", clust="kmeans", dep_var="Growth", ...){
+# Automated clustering ####
+
+auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Age", link="log", dep_var="Growth", optim="alternate", cluster_criteria="BIC", distance="euclidean", clust="kmeans", ...){
   
-  # Compute distance between trees
-  dist_matrix <- dist_tra_euclidean(tra, group_by, link, dep_var)
+  # Start number of clusters at sqrt(n/2)
+  # Common rule of thumb
+  n_trees <- length(unique(tra$Tree))
+  k <- round(sqrt(n_trees/2))
   
-  # Impute missing values? Use principal components to understand variance structure?
-  # Or maybe impute all values in the distance matrix
-  # Actually, that's impossible because requires estimates of time or age outside of range
+  # Loop controls
+  solution_found <- FALSE
+  iteration <- 0
   
+  # Keeping track of progress  
+  cluster_scores <- data.frame(k=1, criteria=fit[[cluster_criteria]])
+  
+  
+  while (!solution_found)
+  {
+    # Updates
+    iteration <- iteration + 1
+    print(paste("Cluster iteration", iteration))
+    print(paste("Testing model given", k, "clusters"))
+    
+    # Find clusters 
+    clusters <- cluster_tra(resids, k, split, link, dep_var, distance, clust)#, ...)
+    
+    # Assign clusters to data
+    new_tra <- merge(tra, clusters, by="Tree")
+    cname <- paste(split, "Split", sep="_")
+    new_tra[[cname]] <- new_tra$clusters
+    
+    # Standardize using clusters
+    results <- standardize_tra(new_tra, model, split, link, dep_var, optim, auto_cluster=F, return_data=T, make_plots=F)#, ...)
+    
+    # Record results
+    score <- results$fit[[cluster_criteria]]
+    cluster_scores <- rbind(cluster_scores, data.frame(k=k, criteria=score))
+    
+    # Decide on next direction to search
+    
+    # Try (in vain) to ensure that each age group has more than 1 tree
+    # If age trends are unsmoothed
+    # Avoid singularities
+    lower_bound <- 1
+    upper_bound <- ifelse(optim=="gam", n_trees, floor(n_trees/2))
+    
+    next_smallest <- max(cluster_scores$k[cluster_scores$k < k], lower_bound)    
+    next_largest  <- min(cluster_scores$k[cluster_scores$k > k], upper_bound)
+    
+    next_smallest_score <- cluster_scores[cluster_scores$k==next_smallest, "criteria"]
+    gradient <- score - next_smallest_score
+    
+    # Adj.Rsq should be maximized
+    # All others should be minimized
+    if (cluster_criteria == "Adj.Rsq"){
+      gradient <- -gradient
+    }
+    
+    # Assumes strictly concave up reward function
+    # This is actually a very good assumption
+    # LLH should always increase with clusters
+    # But number of parameters will increase as well
+    # Thus holds for AIC / BIC
+    
+    direction <- ifelse (gradient > 0, "less", "more")
+    
+    # Binary search for naive speed / coverage
+    if (direction == "less"){
+      next_k <- ceiling((k + next_smallest)/2)
+    } else if (direction == "more") {
+      next_k <- floor((k + next_largest)/2)
+    }
+    
+    # Once step size < 1 the local space is exhaustively searched
+    if (next_k == k){
+      solution_found <- TRUE
+    }
+    
+    # Change k for next iteration
+    k <- next_k
+    
+  }
+  
+  # Find the final solution given the optimal number of clusters
+  if (cluster_criteria == "Adj.Rsq"){
+    optimal_k <- cluster_scores[which.max(cluster_scores$criteria), "k"]
+  } else {
+    optimal_k <- cluster_scores[which.min(cluster_scores$criteria), "k"]
+  }
+  clusters <- cluster_tra(resids, k, split, link, dep_var, distance, clust)#, ...)
+  
+  optimal_tra <- merge(tra, clusters, by="Tree")
+  cname <- paste(split, "Split", sep="_")
+  optimal_tra[[cname]] <- new_tra$clusters
+  optimal_tra <- optimal_tra[,-which(names(optimal_tra)=="clusters")]
+  
+  print (paste("The optimal number of clusters was found to be", optimal_k))
+  print ("Computing final solution")
+  
+  solution <- standardize_tra(optimal_tra, model, split, link, dep_var, optim, auto_cluster=F, return_data=T, make_plots=F)#,...)  
+  
+  
+  # Report full list of clusters / scores searched
+  names(cluster_scores)[2] <- cluster_criteria
+  print(cluster_scores)
+  
+  return(solution)
+  
+}
+
+
+#  Wrappers ####
+
+# Find clusters given k
+cluster_tra <- function(tra,  num_groups=2, group_by="Age", link="log", dep_var="Growth",  distance="euclidean", clust="kmeans", ...){
+  
+  # Compute distance matrix
+  dist_matrix <- find_dist(tra, group_by, link, distance, dep_var)
+  
+  # Identify clusters
+  clusters <- find_clusters(dist_matrix, num_groups, clust, ...)
+  
+  return(clusters)
+  
+}
+
+# Clustering algorithms ####
+
+# Wrapper for clustering
+find_clusters <- function(dist_matrix, num_groups=2, clust="kmeans", ...){
   
   # Find clusters
   
-  # kmeans (classical, no support for NA)
+  # kmeans (classical)
+  if (clust=="kmeans"){
+    clust_model <- kmeans(dist_matrix, num_groups, ...)
+    clusters <- clust_model$cluster
+  }
   
   # pam (robust k-means)
+  else if(clust=="pam"){
+    clust_model <- pam(dist_matrix, num_groups, diss=TRUE, ...)
+    clusters <- clust_model$clustering
+  }
   
   # fanny (fuzzy)
+  else if(clust=="pam"){
+    clust_model <- fanny(dist_matrix, num_groups, diss=TRUE, ...)
+    clusters <- clust_model$clustering
+  }
   
   # agnes (hierarchical, combines)
-  agnes(dist_matrix, num_groups, diss=TRUE)
+  else if(clust=="agnes"){
+    clust_model <- agnes(dist_matrix, diss=TRUE, ...)    
+    clusters <- cutree(clust_model, num_groups)
+  }
   # diana (hierarchical, splits)
+  else if(clust=="diana"){
+    clust_model <- diana(dist_matrix, num_groups, diss=TRUE, ...)    
+    clusters <- cutree(clust_model, num_groups)
+  }
   
-  # use cutree to split into groups
+  # Cleanup
+  names(clusters) <- colnames(dist_matrix)
   
-  # clusplot to view clusters
+  clust_df <- data.frame(Tree=names(clusters), clusters)
   
-  # Relevant to paper!
-  # Specifically, the Mclust( ) function in the mclust package selects the optimal model according to BIC for EM initialized by hierarchical clustering for parameterized Gaussian mixture models.
-  
-  # Return cluster object and group_id column
+  clust_df$clusters <- as.factor(clust_df$clusters)
+    
+  return(clust_df)
+
 }
 
 # Distance functions ####
 # In general, more useful when used on residuals than raw data
+
+# Distance wrapper
+find_dist <- function(tra, group_by="Age", link="log", distance="euclidean", dep_var="Growth") {
+  
+  # Compute distance between trees
+  if (distance=="euclidean"){
+    dist_matrix <- dist_tra_euclidean(tra, group_by, link, dep_var)
+  }
+  
+  # Impute missing values
+  if (any(is.na(dist_matrix))){
+    dist_matrix <- dist_matrix_trilateration(dist_matrix)
+  }
+  
+  return(dist_matrix)
+}
+
+# Imputing missing values in a distance matrix
+# Uses high-dimensional trilateration
+# Start with: http://stackoverflow.com/questions/10963054/finding-the-coordinates-of-points-from-distance-matrix
+dist_matrix_trilateration <- function(dist_matrix){
+  
+  o_names <- rownames(dist_matrix)
+  new_dist_matrix <- dist_matrix
+  
+  # Complete objects have no NA values
+  complete <- o_names[all(apply(dist_matrix, !is.na))]
+  incomplete <- o_names[!(o_names %in% complete)]
+  
+  # Build position matrix for all complete objects
+  # Columns are dimension, rows are points
+  # Rownames are object names
+  pos_matrix <- NA
+  new_pos_matrix <- pos_matrix
+  
+  # For each incomplete object
+  for (i in incomplete){
+    
+    # Reduce complete distance matrix to embedding
+    # Such that valid pairwise distances form the axes
+    r_pos_matrix <- NA
+    
+    # Find coordinates of incomplete object in this embedding
+    r_pos_i <- NA
+    r_pos_matrix_i <- rbind(r_pos_matrix, r_pos_i)
+    
+    # Find originally missing distances
+    missing_partners <- intersect(o_names(is.na(dist_matrix[i, ])), complete)
+    
+    for (m in missing_partners){
+        new_dist_matrix[i,m] <- dist(r_pos_i, r_pos_matrix[m,])
+        # Symmetry!
+        new_dist_matrix[i,m] <- new_dist_matrix[m,i]
+    }
+    
+    # Transform back into original coordinate system
+    pos_i <- NA
+    new_pos_matrix <- rbind(new_pos_matrix, pos_i)
+    
+  }
+  
+  # Find missing pairwise distances for incomplete objects
+  # Use imputed coordinates
+  i_i_pairs <- which(new_dist_matrix==0, arr.ind=T)
+  
+  for (j in 1:nrow(i_i_pairs)){
+    row_j <- o_names[i_i_pairs[j, "row"]]
+    col_j <- o_namesi_i_pairs[j, "col"]]
+    
+    new_dist_matrix[row_j, col_j] <- dist(new_pos_matrix[row_j,], new_pos_matrix[col_j,])
+  }
+  
+  return(new_dist_matrix)
+
+}
 
 
 # Mean Euclidean distance between pairs

@@ -2,11 +2,11 @@
 set.seed(42)
 
 # Trees
-n_tree <- 50
+n_tree <- 20
 
 # Time
-n_time <- 300
-start_year <- 1700
+n_time <- 500
+start_year <- 1500
 end_year <- start_year + n_time - 1
 
 # Age
@@ -47,7 +47,7 @@ true_age <-  list(A=constBAI_trend(1:n_age), B=logistic_trend(1:n_age))
 true_age <- lapply(true_age, function(x){names(x) <- 1:n_age; x})
 
 # Assign trees to approriate age group
-age_split_df <- data.frame(Tree=names(true_tree), Age_Split=sample(c("A", "B"), size=n_tree, replace=T))
+true_clusters <- data.frame(Tree=names(true_tree), Age_Split=sample(c("A", "B"), size=n_tree, replace=T))
 
 # Combine effects
 raw_effects <- list(Tree=true_tree, Time=true_time, Age=true_age)
@@ -78,7 +78,7 @@ tra_structure <- tra_structure[!(tra_structure$Time > end_year), ]
 # Finalizing dataset ####
 
 # Adding information on age split
-tra_structure <- merge(tra_structure, age_split_df, by="Tree")
+tra_structure <- merge(tra_structure, true_clusters, by="Tree")
 
 # Setup final tree ring array
 tra <- tra_structure
@@ -120,10 +120,10 @@ tra <- segment_length_curse_dataset$tra
 # Cleaning dataset ####
 
 # Truncate by time
-tra <- truncate_tra(tra, min_depth=3, id="Time", split="Age")
+tra <- truncate_tra(tra, min_depth=1, id="Time", split="Age")
 
 # Truncate by age
-tra <- truncate_tra(tra, min_depth=3, id="Age", split="Age")
+tra <- truncate_tra(tra, min_depth=1, id="Age", split="Age")
 
 # Clean up true effects to match
 trunc_skele_effects <- make_skeleton_effects(tra, model=c("Tree", "Time", "Age"), split="Age", link="log")
@@ -133,16 +133,58 @@ true_effects <- rescale_effects(synchronize_effects(true_effects, trunc_skele_ef
 # Testing out various standardization options ####
 
 # No splitting
-seq_1 <- standardize_tra(tra, optim="sequential")
-alt_1 <- standardize_tra(tra, optim="alternate")
-glm_1 <- standardize_tra(tra, optim="glm")
-gam_1 <- standardize_tra(tra, optim="gam")
+seq_1 <- standardize_tra(tra, optim="sequential", return_data=T)
+alt_1 <- standardize_tra(tra, optim="alternate", return_data=T)
+glm_1 <- standardize_tra(tra, optim="glm", return_data=T)
+gam_1 <- standardize_tra(tra, optim="gam", return_data=T)
 
 # True splitting
 seq_2 <- standardize_tra(tra, optim="sequential", split="Age")
 alt_2 <- standardize_tra(tra, optim="alternate", split="Age")
 glm_2 <- standardize_tra(tra, optim="glm", split="Age")
 gam_2 <- standardize_tra(tra, optim="gam", split="Age")
+
+# Clustered splitting (known number of clusters)
+num_age_groups <- length(unique(tra$Age_Split))
+
+seq_3_clusters <- cluster_tra(seq_1$dat$residuals, num_groups=num_age_groups, clust="pam")
+seq_3_tra <- merge(tra, seq_3_clusters)
+seq_3_tra$Age_Split <- seq_3_tra$clusters
+seq_3 <- standardize_tra(seq_3_tra, optim="sequential", split="Age")
+
+alt_3_clusters <- cluster_tra(alt_1$dat$residuals, num_groups=num_age_groups, clust="pam")
+alt_3_tra <- merge(tra, alt_3_clusters)
+alt_3_tra$Age_Split <- alt_3_tra$clusters
+alt_3 <- standardize_tra(alt_3_tra, optim="alternate", split="Age")
+
+glm_3_clusters <- cluster_tra(glm_1$dat$residuals, num_groups=num_age_groups, clust="pam")
+glm_3_tra <- merge(tra, glm_3_clusters)
+glm_3_tra$Age_Split <- glm_3_tra$clusters
+glm_3 <- standardize_tra(glm_3_tra, optim="glm", split="Age")
+
+gam_3_clusters <- cluster_tra(gam_1$dat$residuals, num_groups=num_age_groups, clust="pam")
+gam_3_tra <- merge(tra, gam_3_clusters)
+gam_3_tra$Age_Split <- gam_3_tra$clusters
+gam_3 <- standardize_tra(gam_3_tra, optim="gam", split="Age")
+
+# Automated clustering
+seq_4 <- standardize_tra(tra, optim="sequential", split="Age", auto_cluster=TRUE)
+alt_4 <- standardize_tra(tra, optim="alternate", split="Age", auto_cluster=TRUE)
+glm_4 <- standardize_tra(tra, optim="glm", split="Age", auto_cluster=TRUE)
+gam_4 <- standardize_tra(tra, optim="gam", split="Age", auto_cluster=TRUE)
+
+# Individual series standardization
+
+# Comparing clusters ####
+# all_clusters <- list(
+#   true=true_clusters,
+#   seq=seq_3_clusters$clusters,
+#   alt=alt_3_clusters$clusters,
+#   glm=glm_3_clusters$clusters,
+#   gam=gam_3_clusters$clusters
+# )
+# 
+# cluster_df <- Reduce(merge, all_clusters)
 
 # Model fit ####
 model_fit_1 <- data.frame(seq=unlist(seq_1$fit),
@@ -157,15 +199,22 @@ model_fit_2 <- data.frame(seq=unlist(seq_2$fit),
                           gam=unlist(gam_2$fit)
 )
 
-# model_fit_3 <- data.frame(seq=unlist(seq_3$fit),
-#                           alt=unlist(alt_3$fit),
-#                           glm=unlist(glm_3$fit),
-#                           gam=unlist(gam_3$fit)
-# )
+model_fit_3 <- data.frame(seq=unlist(seq_3$fit),
+                          alt=unlist(alt_3$fit),
+                          glm=unlist(glm_3$fit),
+                          gam=unlist(gam_3$fit)
+)
+
+model_fit_4 <- data.frame(seq=unlist(seq_4$fit),
+                          alt=unlist(alt_4$fit),
+                          glm=unlist(glm_4$fit),
+                          gam=unlist(gam_4$fit)
+)
 
 print(model_fit_1)
 print(model_fit_2)
-# print(model_fit_3)
+print(model_fit_3)
+print(model_fit_4)
 
 # Collating data ####
 
@@ -186,36 +235,43 @@ Age_id <- rep(names(true_effects$Age), times=length(model_list))
 
 Time_1 <- data.frame(effect=c(true_effects$Time, seq_1$effects$Time, alt_1$effects$Time, glm_1$effects$Time, gam_1$effects$Time), model=Time_model, id=Time_id, case=1)
 
-Age_1 <- data.frame(effect=c(true_effects$Age, seq_1$effects$Age, alt_1$effects$Age, glm_1$effects$Age, gam_1$effects$Age), model=Age_model, id=Age_id, case=1)
+# Age_1 <- data.frame(effect=c(true_effects$Age, seq_1$effects$Age, alt_1$effects$Age, glm_1$effects$Age, gam_1$effects$Age), model=Age_model, id=Age_id, case=1)
 
 # Case 2
 # Tree_2 <- data.frame(effect=c(true_effects$Tree, seq_2$effects$Tree, alt_2$effects$Tree, glm_2$effects$Tree, gam_2$effects$Tree), model=Tree_model, id=Tree_id, case=2)
 
 Time_2 <- data.frame(effect=c(true_effects$Time, seq_2$effects$Time, alt_2$effects$Time, glm_2$effects$Time, gam_2$effects$Time), model=Time_model, id=Time_id, case=2)
 
-Age_2 <- data.frame(effect=c(true_effects$Age, seq_2$effects$Age, alt_2$effects$Age, glm_2$effects$Age, gam_2$effects$Age), model=Age_model, id=Age_id, case=2)
+# Age_2 <- data.frame(effect=c(true_effects$Age, seq_2$effects$Age, alt_2$effects$Age, glm_2$effects$Age, gam_2$effects$Age), model=Age_model, id=Age_id, case=2)
 
 # Case 3
 # Tree_3 <- data.frame(effect=c(true_effects$Tree, seq_3$effects$Tree, alt_3$effects$Tree, glm_3$effects$Tree, gam_3$effects$Tree), model=Tree_model, id=Tree_id, case=3)
 
-# Time_3 <- data.frame(effect=c(true_effects$Time, seq_3$effects$Time, alt_3$effects$Time, glm_3$effects$Time, gam_3$effects$Time), model=Time_model, id=Time_id, case=3)
-# 
+Time_3 <- data.frame(effect=c(true_effects$Time, seq_3$effects$Time, alt_3$effects$Time, glm_3$effects$Time, gam_3$effects$Time), model=Time_model, id=Time_id, case=3)
+
 # Age_3 <- data.frame(effect=c(true_effects$Age, seq_3$effects$Age, alt_3$effects$Age, glm_3$effects$Age, gam_3$effects$Age), model=Age_model, id=Age_id, case=3)
 
+# Case 4
+# Tree_4 <- data.frame(effect=c(true_effects$Tree, seq_4$effects$Tree, alt_4$effects$Tree, glm_4$effects$Tree, gam_4$effects$Tree), model=Tree_model, id=Tree_id, case=4)
+
+Time_4 <- data.frame(effect=c(true_effects$Time, seq_4$effects$Time, alt_4$effects$Time, glm_4$effects$Time, gam_4$effects$Time), model=Time_model, id=Time_id, case=4)
+
+# Age_4 <- data.frame(effect=c(true_effects$Age, seq_4$effects$Age, alt_4$effects$Age, glm_4$effects$Age, gam_4$effects$Age), model=Age_model, id=Age_id, case=4)
+
 # Collating cases
-# Tree_df <- rbind(Tree_1, Tree_2, Tree_3)
-Time_df <- rbind(Time_1, Time_2)#, Time_3)
-Age_df <- rbind(Age_1, Age_2)#, Age_3)
+# Tree_df <- rbind(Tree_1, Tree_2, Tree_3, Tree_4)
+Time_df <- rbind(Time_1, Time_2, Time_3, Time_4)
+# Age_df <- rbind(Age_1, Age_2, Age_3, Age_4)
 
 Time_df$id <- as.numeric(as.character(Time_df$id))
-Age_df$id <- as.numeric(as.character(Age_df$id))
+# Age_df$id <- as.numeric(as.character(Age_df$id))
 
 # Tree_df_nt <- Tree_df[-Tree_df$model=="True",]
 Time_df_ratio <- Time_df[-which(Time_df$model=="True"),]
-Age_df_ratio <- Age_df[-which(Age_df$model=="True"),]
+# Age_df_ratio <- Age_df[-which(Age_df$model=="True"),]
 
 Time_df_ratio$effect <- Time_df_ratio$effect / true_effects$Time
-Age_df_ratio$effect <- Age_df_ratio$effect / true_effects$Age
+# Age_df_ratio$effect <- Age_df_ratio$effect / true_effects$Age
 
 # Summary plots ####
 
@@ -224,20 +280,20 @@ Age_df_ratio$effect <- Age_df_ratio$effect / true_effects$Age
 
 Time_raw_plot <- ggplot(Time_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Year") + ylab("Effect") + geom_hline(y=1)
 
-Age_raw_plot <- ggplot(Age_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Effect")
+# Age_raw_plot <- ggplot(Age_df, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Effect")
 
 # Relative to true
 # Tree_scatter_plot <- ggplot(Tree_df_nt, aes(x=log(effect), y=log(true_effects$Tree))) + geom_point()  + facet_grid(case~model) + theme_bw() + xlab("Log-Estimated Tree Effect") + ylab("Log-True Tree Effect") + geom_smooth() + geom_abline(intercept=0, slope=1)
 
 Time_ratio_plot <- ggplot(Time_df_ratio, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Year") + ylab("Ratio between estimated and true effect") + geom_hline(y=1)
 
-Age_ratio_plot <- ggplot(Age_df_ratio, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Ratio between estimated and true effect") + geom_hline(y=1)
+# Age_ratio_plot <- ggplot(Age_df_ratio, aes(x=id, y=effect)) + geom_line()  + facet_grid(case~model) + theme_bw() + xlab("Age") + ylab("Ratio between estimated and true effect") + geom_hline(y=1)
 
 # Printing
 # print(Tree_raw_plot)
 print(Time_raw_plot)
-print(Age_raw_plot)
+# print(Age_raw_plot)
 
 # print(Tree_scatter_plot)
 print(Time_ratio_plot)
-print(Age_ratio_plot)
+# print(Age_ratio_plot)

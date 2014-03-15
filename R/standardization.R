@@ -6,7 +6,7 @@
 # post_hoc: apply a post-hoc correction to reduce instability in 3-effect models
 # ...: further arguments to control model fitting in optimization algorithm
 
-standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", dep_var="Growth", optim="alternate", ci_size=0.95, post_hoc=TRUE, return_data=FALSE, make_plots=TRUE, show_plots=TRUE, ...)
+standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", dep_var="Growth", optim="alternate", auto_cluster=FALSE, cluster_criteria="BIC", distance="euclidean", clust="kmeans", ci_size=0.95, return_data=FALSE, make_plots=TRUE, show_plots=TRUE, ...)
 {
   
   # Exception handling
@@ -18,7 +18,13 @@ standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", d
       stop("Zero or negative values cannot be used. Estimated effects will not be stable.")
     }
   }
-
+  
+  # First run of automatic clustering should be done with no splits
+  if (auto_cluster){
+    original_split <- split
+    split <- NA
+  }
+  
   # Fitting the model
   if(optim == "alternate")
   {
@@ -70,6 +76,20 @@ standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", d
   dat <- list(original=tra, predicted=fit$predicted, residuals=fit$residuals)
   fit <- fit[-which(names(fit)=="predicted" | names(fit)=="residuals")]
   
+  # Automatic clustering
+  if (auto_cluster){
+    results <- auto_cluster_tra(tra, resids, fit, model, original_split, link, dep_var, optim, cluster_criteria, ...)
+    
+    # Use clustered results instead of initial run
+    effects <- results$effects
+    se <- results$se
+    fit <- results$fit
+    dat <- results$dat
+    
+    # Reset split parameter
+    split <- original_split
+  }
+  
   # Make plots if needed
   if (make_plots){
       plots <- make_standardization_plots(effects, se, dat, split, link, dep_var, ci_size)
@@ -82,7 +102,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", d
   }
   
   # Record model fitting settings
-  settings <- list(model=model, split=split, link=link, optim=optim,  dep_var=dep_var)
+  settings <- list(model=model, split=split, link=link, optim=optim,  dep_var=dep_var, auto_cluster=auto_cluster, cluster_criteria=cluster_criteria, distance=distance, clust=clust)
                    
   # Compile and output all relevant information
   out <- list(effects=effects, se=se, fit=fit, settings=settings)
