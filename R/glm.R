@@ -13,7 +13,16 @@ standardize_glm <- function (tra, model=c("Time", "Age"), split=NA, link="log", 
   
   # Set family to use appropriate link function
   family <- gaussian(link=link)
-    
+  
+  # Set all relevant variables to factors
+  for (e in model){
+    tra[[e]] <- as.factor(tra[[e]])
+    if (e %in% split){
+      cname <- paste(e, "Split", sep="_")
+      tra[[cname]] <- as.factor(tra[[cname]])
+    }
+  }
+  
   # Estimate the growth model
   growth_model <- glm(growth_formula, family=family, data=tra, ...)
     

@@ -4,12 +4,6 @@
 standardize_gam <- function (tra, model=c("Time", "Age"), split=NA, link="log", dep_var="Growth", ...)
 {
   
-  # Clean age info to ensure numeric form
-  if ("Age" %in% model)
-  {
-    tra$Age <- as.numeric(as.character(tra$Age))
-  }
-  
   # Construct formula for regression
   growth_formula <- as.formula(make_gam_formula(model, split, dep_var))
   
@@ -19,6 +13,21 @@ standardize_gam <- function (tra, model=c("Time", "Age"), split=NA, link="log", 
   
   # Set family to use appropriate link function
   family <- gaussian(link=link)
+  
+  # Set all relevant variables to factors
+  for (e in model){
+    tra[[e]] <- as.factor(tra[[e]])
+    if (e %in% split){
+      cname <- paste(e, "Split", sep="_")
+      tra[[cname]] <- as.factor(tra[[cname]])
+    }
+  }
+  
+  # Clean age info to ensure numeric form
+  if ("Age" %in% model)
+  {
+    tra$Age <- as.numeric(as.character(tra$Age))
+  }
   
   # Estimate the growth model
   growth_model <- gam(growth_formula, family=family, data=tra, ...)
@@ -232,12 +241,12 @@ extract_effects_gam <- function(growth_model, model, split, link, tra)
   if ("Age" %in% model)
   {
     # Find estimates of effect by comparing predictions to predictions from other variables
-    base_indices <- sapply(reduced_model, function(x){unique(tra[[x]][1])})
+    base_indices <- sapply(reduced_model, function(x){as.character(unique(tra[[x]][1]))})
     
     
     if (!("Age" %in% split))
     {
-      Age_levels <- as.numeric(unique(tra$Age))
+      Age_levels <- as.numeric(as.character(unique(tra$Age)))
       
       dummy_data <- matrix(NA, nrow=length(Age_levels), ncol=length(model))
       colnames(dummy_data) <- c(reduced_model, "Age")
@@ -261,7 +270,7 @@ extract_effects_gam <- function(growth_model, model, split, link, tra)
       # Generate predictions for each group / age combo
       for (group in groups)
       {
-        Age_levels <- as.numeric(unique(tra[tra$Age_Split==group, "Age"]))
+        Age_levels <- as.numeric(as.character(unique(tra[tra$Age_Split==group, "Age"])))
         
         dummy_data <- matrix(NA, nrow=length(Age_levels), ncol=length(model)+1)
         colnames(dummy_data) <- c(reduced_model, "Age", "Age_Split")
