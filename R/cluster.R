@@ -119,7 +119,7 @@ auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Ag
 cluster_tra <- function(tra,  num_groups=2, group_by="Age", link="log", dep_var="Growth",  distance="euclidean", clust="kmeans", ...){
   
   # Compute distance matrix
-  dist_matrix <- find_dist(tra, group_by, link, distance, dep_var)
+  dist_matrix <- find_dist_tra(tra, group_by, link, distance, dep_var)
   
   # Identify clusters
   clusters <- find_clusters(dist_matrix, num_groups, clust, ...)
@@ -179,7 +179,7 @@ find_clusters <- function(dist_matrix, num_groups=2, clust="kmeans", ...){
 # In general, more useful when used on residuals than raw data
 
 # Distance wrapper
-find_dist <- function(tra, group_by="Age", link="log", distance="euclidean", dep_var="Growth") {
+find_dist_tra <- function(tra, group_by="Age", link="log", distance="euclidean", dep_var="Growth") {
   
   # Compute distance between trees
   if (distance=="euclidean"){
@@ -188,69 +188,12 @@ find_dist <- function(tra, group_by="Age", link="log", distance="euclidean", dep
   
   # Impute missing values
   if (any(is.na(dist_matrix))){
-    dist_matrix <- dist_matrix_trilateration(dist_matrix)
+    dist_matrix <- impute_indirect_path(dist_matrix)
+    
+    print("Some pairs of trees had no years in common. Missing similarity distances were imputed.")
   }
   
   return(dist_matrix)
-}
-
-# Imputing missing values in a distance matrix
-# Uses high-dimensional trilateration
-# Start with: http://stackoverflow.com/questions/10963054/finding-the-coordinates-of-points-from-distance-matrix
-dist_matrix_trilateration <- function(dist_matrix){
-  
-  o_names <- rownames(dist_matrix)
-  new_dist_matrix <- dist_matrix
-  
-  # Complete objects have no NA values
-  complete <- o_names[all(apply(dist_matrix, !is.na))]
-  incomplete <- o_names[!(o_names %in% complete)]
-  
-  # Build position matrix for all complete objects
-  # Columns are dimension, rows are points
-  # Rownames are object names
-  pos_matrix <- NA
-  new_pos_matrix <- pos_matrix
-  
-  # For each incomplete object
-  for (i in incomplete){
-    
-    # Reduce complete distance matrix to embedding
-    # Such that valid pairwise distances form the axes
-    r_pos_matrix <- NA
-    
-    # Find coordinates of incomplete object in this embedding
-    r_pos_i <- NA
-    r_pos_matrix_i <- rbind(r_pos_matrix, r_pos_i)
-    
-    # Find originally missing distances
-    missing_partners <- intersect(o_names(is.na(dist_matrix[i, ])), complete)
-    
-    for (m in missing_partners){
-        new_dist_matrix[i,m] <- dist(r_pos_i, r_pos_matrix[m,])
-        # Symmetry!
-        new_dist_matrix[i,m] <- new_dist_matrix[m,i]
-    }
-    
-    # Transform back into original coordinate system
-    pos_i <- NA
-    new_pos_matrix <- rbind(new_pos_matrix, pos_i)
-    
-  }
-  
-  # Find missing pairwise distances for incomplete objects
-  # Use imputed coordinates
-  i_i_pairs <- which(new_dist_matrix==0, arr.ind=T)
-  
-  for (j in 1:nrow(i_i_pairs)){
-    row_j <- o_names[i_i_pairs[j, "row"]]
-    col_j <- o_namesi_i_pairs[j, "col"]]
-    
-    new_dist_matrix[row_j, col_j] <- dist(new_pos_matrix[row_j,], new_pos_matrix[col_j,])
-  }
-  
-  return(new_dist_matrix)
-
 }
 
 
@@ -325,3 +268,135 @@ dist_tra_euclidean <- function(tra, group_by="Age", link="log", dep_var="Growth"
 # Use sigma from whole dataset
 # Smaller values mean less similar so... invert? 
 
+
+# Imputing missing values in a distance matrix ####
+# Uses high-dimensional trilateration
+# Start with: http://stackoverflow.com/questions/10963054/finding-the-coordinates-of-points-from-distance-matrix
+# See also: multidimensional scaling
+# See also: distance geometry
+# Projection onto subspace
+
+
+# Find maximum number of dimensions
+# Generate position matrix for that
+# Place incomplete objects on the basis of minimizing strain (maybe happens automatically?)
+# Find missing distances
+
+impute_trilateration <- function(dist_matrix){
+  
+  o_names <- rownames(dist_matrix)
+  new_dist_matrix <- dist_matrix
+  
+  # Complete objects have no NA values
+  complete <- o_names[all(apply(dist_matrix, !is.na))]
+  incomplete <- o_names[!(o_names %in% complete)]
+  
+  # Build position matrix for all complete objects
+  # Columns are dimension, rows are points
+  # Rownames are object names
+  pos_matrix <- NA
+  new_pos_matrix <- pos_matrix
+  
+  # For each incomplete object
+  for (i in incomplete){
+    
+    # Reduce complete distance matrix to projection
+    # Such that valid pairwise distances form the axes
+    r_pos_matrix <- NA
+    
+    # Find coordinates of incomplete object in this embedding
+    r_pos_i <- NA
+    r_pos_matrix_i <- rbind(r_pos_matrix, r_pos_i)
+    
+    # Find originally missing distances
+    missing_partners <- intersect(o_names(is.na(dist_matrix[i, ])), complete)
+    
+    for (m in missing_partners){
+      new_dist_matrix[i,m] <- dist(r_pos_i, r_pos_matrix[m,])
+      # Symmetry!
+      new_dist_matrix[i,m] <- new_dist_matrix[m,i]
+    }
+    
+    # Transform back into original coordinate system
+    pos_i <- NA
+    new_pos_matrix <- rbind(new_pos_matrix, pos_i)
+    
+  }
+  
+  # Find missing pairwise distances for incomplete objects
+  # Use imputed coordinates
+  i_i_pairs <- which(is.na(new_dist_matrix), arr.ind=T)
+  
+  for (j in 1:nrow(i_i_pairs)){
+#     row_j <- o_names[i_i_pairs[j, "row"]]
+#     col_j <- o_namesi_i_pairs[j, "col"]]
+
+    new_dist_matrix[row_j, col_j] <- dist(new_pos_matrix[row_j,], new_pos_matrix[col_j,])
+  }
+
+  return(new_dist_matrix)
+
+}
+
+# Impute distances based on length of indirect path
+impute_indirect_path <- function(dist_matrix){  
+  
+  # Construct base graph representing links between trees
+  N <- nrow(dist_matrix)
+  dist_graph <- graph.full(N)
+  
+  # Add weights
+  E(dist_graph)$weight <- dist_matrix[lower.tri(dist_matrix)]
+  
+  # Delete missing edges
+  missing_pairs <- which(is.na(dist_matrix), arr.ind=T)
+  
+  for (r in 1:nrow(missing_pairs)){
+    i <- missing_pairs[r,1]
+    j <- missing_pairs[r,2]
+    dist_graph[i,j] <- FALSE
+  }
+  
+  
+  # Find the shortest path between each missing node
+  for (r in 1:nrow(missing_pairs)){
+    i <- missing_pairs[r,1]
+    j <- missing_pairs[r,2]
+    
+    # Search for shortest weighted path
+    path <- get.shortest.paths(dist_graph, i, j)
+    
+    # Grab path lengths
+    # Using only first of shortest paths (ties should be very rare)
+    path_lengths <- sapply(1:(length(path$vpath[[1]])-1),function(x){
+      dist_graph[path$vpath[[1]][x], path$vpath[[1]][x+1]]
+    })
+    
+    # Lower bound, assumes perfect doubling back
+#     path_dist <- 0
+#     for (k in path_lengths){
+#       if (path_dist<=0){
+#         path_dist <- path_dist + k
+#       } else {
+#         path_dist <- path_dist - k
+#       }
+#     }
+#     path_dist <- abs(path_dist)
+    
+    
+    # Reasonable estimate, assumes right angles every time
+    path_dist <- sum(sapply(1:(length(path_lengths)-1), function(x){
+      sqrt(path_lengths[x]^2 + path_lengths[x+1]^2)
+    }))
+    
+    # Upper bound, assumes straight line between two missing values 
+    # Equivalent to shortest.paths(dist_graph, i, j)
+#     path_dist <- sum(path_lengths)
+    
+    # Use the path distance to impute missing distance values
+    dist_matrix[i,j] <- path_dist
+    
+  }
+  
+  return(dist_matrix)
+}
