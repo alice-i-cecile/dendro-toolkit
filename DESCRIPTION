@@ -7,4 +7,4 @@ Author: Alice I. Cecile
 Maintainer: Alice I. Cecile (alice.i.cecile@gmail.com)
 Description: New standardization techniques for dendrochronological analysis of tree rings
 License: MIT
-Imports: dplR, foreach, mgcv, ggplot2
+Imports: cluster, dplR, foreach, ggplot2, mgcv, reshape, stringr 
