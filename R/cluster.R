@@ -112,7 +112,6 @@ auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Ag
   
 }
 
-
 #  Wrappers ####
 
 # Find clusters given k
@@ -399,4 +398,202 @@ impute_indirect_path <- function(dist_matrix){
   }
   
   return(dist_matrix)
+}
+
+# Impute distances based on bounds set by indirect paths
+impute_bounded_path <- function(dist_matrix, max_paths=100){  
+  
+  
+  # Return upper and lower bounds of all missing values
+  dist_matrix_lower <- dist_matrix
+  dist_matrix_upper <- dist_matrix
+  
+  # Return original distance matrix if none are missing
+  if (all(!is.na(dist_matrix))){
+    return(list(lower=dist_matrix_lower, upper=dist_matrix_upper))
+  }
+
+  # Construct base graph representing links between trees
+  N <- nrow(dist_matrix)
+  dist_graph <- graph.full(N)
+  
+  # Add weights
+  E(dist_graph)$weight <- dist_matrix[lower.tri(dist_matrix)]
+  
+  # Delete missing edges
+  missing_pairs <- which(is.na(dist_matrix), arr.ind=T)
+  
+  for (r in 1:nrow(missing_pairs)){
+    i <- missing_pairs[r,1]
+    j <- missing_pairs[r,2]
+    dist_graph[i,j] <- FALSE
+  }
+  
+  # Function to find all unique, non-cycle paths between to nodes
+  # Algorithm from:
+  # http://mathoverflow.net/questions/18603/finding-all-paths-on-undirected-graph
+  find_paths <- function(i,j,max_paths){
+    
+    # Check if we're in a dead end
+    stuck <- function(x, seen){
+      
+      # Not stuck if we've reached the target
+      if (x==j){
+        return(list(stuck=FALSE, seen=seen))
+      }
+      
+      neighbours <- (1:N)[dist_graph[x,]!=0]
+      for (n in neighbours){
+        # Don't double back
+        if (!(n %in% seen)){
+          seen <- c(seen, n)
+          s <- stuck(n, seen)
+          seen <- union(seen, s$seen)
+          if (!s$stuck){
+            return(list(stuck=FALSE, seen=seen))
+          }
+        }
+      }
+      return(list(stuck=FALSE, seen=seen)) 
+    }
+    
+    # Recursive search function
+    search <- function(x, path, seen){      
+      
+      found <- 0
+      paths <- list()
+      
+      # Break out of path if we can't reach the target
+      if (stuck(x, seen)$stuck){
+        return(list(paths=list(path), seen=seen, found=0))
+      } 
+      
+      # Our path is valid if it has reached its destination
+      if (x==j){
+        return(list(paths=list(path), seen=seen, found=1))
+      }
+      
+      
+      # Randomize which neighbour to search
+      # Avoid weird results when subsampling
+      neighbours <- (1:N)[dist_graph[x,]!=0]
+      neighbours <- sample(neighbours, length(neighbours))
+      
+      for (n in neighbours){
+        
+        # Stop looking if you've found enough
+        if (found >= max_paths){
+          break
+        }
+        
+        # Don't double back
+        if (!(n %in% path)){
+          # Add next step to path
+          path <- c(path,n)
+          
+          # Add all valid paths down this branch
+          results <- search(n, path, seen)
+          paths <- c(paths,  results$paths)            
+          found <- found + results$found
+          
+          # Remove it from the path to continue searching from that node
+          path <- path[-which(path==n)]
+        }
+      }
+      
+      return(list(paths=paths, seen=seen, found=found))
+    }
+    
+    # Start your search at i
+    all_paths <- search(i,i,i)$paths
+    
+    return(all_paths)
+  }
+  
+  # Use only unique paths
+  # Order doesn't matter
+  unique_paths <- function(paths){
+    
+    new_paths <- list(paths[[1]])
+    for (i in 2:length(paths)){
+      
+      matches <- sum(sapply(new_paths, function(x){
+        setequal(x, paths[[i]]) 
+      }))
+      
+      # Add unique paths to new dataset
+      if (matches == 0){
+        new_paths <- c(new_paths, list(paths[[i]]))
+      } 
+    }
+    return(new_paths)
+  }
+  
+  # Lower bound on distance, assumes perfect doubling back
+  lower_bound <- function(path){
+    path_lengths <- sapply(1:(length(path)-1),function(x){
+      dist_graph[path[x], path[x+1]]
+    })
+    
+    path_dist <- 0
+    for (k in path_lengths){
+      if (path_dist<=0){
+        path_dist <- path_dist + k
+      } else {
+        path_dist <- path_dist - k
+      }
+    }
+    path_dist <- abs(path_dist)
+    
+    return(path_dist)
+  }
+  
+  # Finding lower / upper bounds for each missing value
+  for (r in 1:nrow(missing_pairs)){
+    
+    i <- missing_pairs[r,1]
+    j <- missing_pairs[r,2]
+    
+    # Don't repeat calculations if mirror has already been done
+    if (is.na(dist_matrix_upper[i,j])){
+      # Search for shortest weighted path
+      # Smallest upper bound, assumes straight line between two missing values 
+      upper <- shortest.paths(dist_graph, i, j)
+      
+      # Grab all the paths between i and j
+      paths <- unique_paths(find_paths(i,j,max_paths))
+      
+      lowers <- sapply(paths, lower_bound)
+      lower <- max(lowers)
+      
+      # Use the path distance to bound missing distance values
+      dist_matrix_upper[i,j] <- upper
+      dist_matrix_upper[j,i] <- upper
+      
+      dist_matrix_lower[i,j] <- lower
+      dist_matrix_lower[j,i] <- lower
+    }    
+  }
+  
+  return(list(lower=dist_matrix_lower, upper=dist_matrix_upper))
+}
+
+test_imputation <- function(dist_matrix){
+  df <- data.frame(i=NA, j=NA, Pyth=NA, True=NA)[0,]
+  
+  for (i in 1:ncol(dist_matrix)){
+    for(j in 1:ncol(dist_matrix)){
+      if (i!=j){
+        foo <- dist_matrix
+        foo[i,j] <- NA
+        foo[j,i] <- NA
+        
+        bat <- impute_indirect_path(foo)
+        df <- rbind(df, data.frame(i=i, j=j, 
+              Imputed=bat[i,j], 
+              True=dist_matrix[i,j]))
+      }
+    }
+  }
+  return(df)
 }
