@@ -6,7 +6,7 @@
 # post_hoc: apply a post-hoc correction to reduce instability in 3-effect models
 # ...: further arguments to control model fitting in optimization algorithm
 
-standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", dep_var="Growth", optim="alternate", auto_cluster=FALSE, cluster_criteria="BIC", distance="euclidean", clust="kmeans", ci_size=0.95, return_data=FALSE, make_plots=TRUE, show_plots=TRUE, ...)
+standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", dep_var="Growth", optim="alternate", auto_cluster=FALSE, n_clusters=NULL, cluster_criteria="BIC", distance="euclidean", clust="kmeans", ci_size=0.95, return_data=FALSE, make_plots=TRUE, show_plots=TRUE, ...)
 {
   
   # Exception handling
@@ -78,7 +78,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", d
   
   # Automatic clustering
   if (auto_cluster){
-    results <- auto_cluster_tra(tra, resids, fit, model, original_split, link, dep_var, optim, cluster_criteria, ...)
+    results <- auto_cluster_tra(tra, dat$residuals, fit, model, original_split, link, dep_var, optim, n_clusters, cluster_criteria, ...)
     
     # Use clustered results instead of initial run
     effects <- results$effects

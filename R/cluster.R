@@ -3,7 +3,28 @@
 
 # Automated clustering ####
 
-auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Age", link="log", dep_var="Growth", optim="alternate", cluster_criteria="BIC", distance="euclidean", clust="kmeans", ...){
+auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Age", link="log", dep_var="Growth", optim="alternate", n_cluster=NULL, cluster_criteria="BIC", distance="euclidean", clust="kmeans", ...){
+  
+  
+  # Alternative approach if k is known
+  if (!is.null(n_cluster)){
+    k <- n_cluster
+    
+    #Find clusters 
+    clusters <- cluster_tra(resids, k, split, link, dep_var, distance, clust, ...)
+    
+    print("Clusters found")
+    
+    # Assign clusters to data
+    new_tra <- merge(tra, clusters, by="Tree")
+    cname <- paste(split, "Split", sep="_")
+    new_tra[[cname]] <- new_tra$clusters
+    
+    # Standardize using clusters
+    results <- standardize_tra(new_tra, model, split, link, dep_var, optim, auto_cluster=F, return_data=T, make_plots=F,...)
+    
+    return(results)
+  }
   
   # Start number of clusters at sqrt(n/2)
   # Common rule of thumb
@@ -26,7 +47,7 @@ auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Ag
     print(paste("Testing model given", k, "clusters"))
     
     # Find clusters 
-    clusters <- cluster_tra(resids, k, split, link, dep_var, distance, clust)#, ...)
+    clusters <- cluster_tra(resids, k, split, link, dep_var, distance, clust, ...)
     
     # Assign clusters to data
     new_tra <- merge(tra, clusters, by="Tree")
@@ -34,7 +55,7 @@ auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Ag
     new_tra[[cname]] <- new_tra$clusters
     
     # Standardize using clusters
-    results <- standardize_tra(new_tra, model, split, link, dep_var, optim, auto_cluster=F, return_data=T, make_plots=F)#, ...)
+    results <- standardize_tra(new_tra, model, split, link, dep_var, optim, auto_cluster=F, return_data=T, make_plots=F, ...)
     
     # Record results
     score <- results$fit[[cluster_criteria]]
@@ -91,7 +112,7 @@ auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Ag
   } else {
     optimal_k <- cluster_scores[which.min(cluster_scores$criteria), "k"]
   }
-  clusters <- cluster_tra(resids, k, split, link, dep_var, distance, clust)#, ...)
+  clusters <- cluster_tra(resids, optimal_k, split, link, dep_var, distance, clust)#, ...)
   
   optimal_tra <- merge(tra, clusters, by="Tree")
   cname <- paste(split, "Split", sep="_")
