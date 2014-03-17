@@ -2,10 +2,10 @@
 \alias{make_effect_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Plot coefficients for a tree-ring standardization model
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+Produce a plot showing the coefficients for an effect in a tree-ring standardization model
 }
 \usage{
 make_effect_plot(effects, effect_name, temporal = FALSE)

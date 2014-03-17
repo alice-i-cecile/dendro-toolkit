@@ -2,10 +2,10 @@
 \alias{make_standardization_plots}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Make common standardization plots
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+Produces a variety of useful and common plots after tree-ring standardization
 }
 \usage{
 make_standardization_plots(effects, data, link = "log")

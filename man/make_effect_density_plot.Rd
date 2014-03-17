@@ -2,10 +2,10 @@
 \alias{make_effect_density_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Kernel density plot for tree-ring effects
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+Produce a kernel density plot showing the distribution of coefficients for an effect in a tree-ring standardization model
 }
 \usage{
 make_effect_density_plot(effects, effect_name, link)

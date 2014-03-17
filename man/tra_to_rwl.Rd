@@ -1,8 +1,8 @@
-\name{tra.to.rwl}
-\alias{tra.to.rwl}
+\name{tra_to_rwl}
+\alias{tra_to_rwl}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Converts .tra format tree ring data to .rwl format
 }
 \description{
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~

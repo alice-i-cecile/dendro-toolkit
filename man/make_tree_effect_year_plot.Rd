@@ -2,7 +2,7 @@
 \alias{make_tree_effect_year_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Make a plot showing tree effect vs. year of birth
 }
 \description{
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~

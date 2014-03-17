@@ -2,7 +2,7 @@
 \alias{sample_depth_tra}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Find the number of samples in the chronology for each year or age
 }
 \description{
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~

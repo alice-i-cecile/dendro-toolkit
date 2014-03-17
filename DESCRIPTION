@@ -4,7 +4,7 @@ Title: Techniques for tree rings
 Version: 0.0
 Date: 2014-02-18
 Author: Alice I. Cecile
-Maintainer: Alice I. Cecile (alice.i.cecile@gmail.com)
+Maintainer: Alice I. Cecile <alice.i.cecile@gmail.com>
 Description: New standardization techniques for dendrochronological analysis of tree rings
 License: MIT
 Imports: cluster, dplR, foreach, ggplot2, mgcv, reshape, stringr 

@@ -2,7 +2,7 @@
 \alias{standardize_tra}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Standardize tree-ring data and produce a chronology
 }
 \description{
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~

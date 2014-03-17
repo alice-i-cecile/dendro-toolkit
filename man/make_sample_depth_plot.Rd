@@ -2,7 +2,7 @@
 \alias{make_sample_depth_plot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-%%  ~~function to do ... ~~
+Make a plot showing the number of samples in the chronology by year or age
 }
 \description{
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
