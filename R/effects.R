@@ -1,14 +1,14 @@
 # Estimating and removing effects ####
 
 # Naive estimate of a single effect (analagous to constructing regional curve or standardized chronology)
-est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
+est_effect <- function (tra, id, link, dep_var="Growth", group=NULL)
 {  
 
   # Estimate effect using averages (crude method of moments)
   estimate_effect <- function(id_i)
   {
     # Estimate using rows from relevant group
-    if (!is.na(group)){
+    if (!is.null(group)){
       cname <- paste(id, "Split", sep="_")
       data <- tra[tra[[id]]==id_i & tra[[cname]]==group, dep_var]
     } else {
@@ -26,24 +26,25 @@ est_effect <- function (tra, id, link, dep_var="Growth", group=NA)
   }
   
   
-  if (!is.na(group)){
+  if (!is.null(group)){
     cname <- paste(id, "Split", sep="_")
     id_levels <- unique(tra[tra[[cname]]==group,][[id]])
   } else {
     id_levels <- unique(tra[[id]])
   }
-  estim_effect <- sapply(id_levels, estimate_effect)
+  estim_effects <- sapply(id_levels, estimate_effect)
+  names(estim_effects) <- id_levels
   
   # Ensure correct ordering
-  list_effect <- list(estim_effect)
+  list_effect <- list(estim_effects)
   names(list_effect) <- id
-  estim_effect <- sort_effects(list_effect, tra, split=NA)[[id]]
+  estim_effect <- sort_effects(list_effect, split=NA)[[id]]
   
   return (estim_effect)
 }
 
 # Remove an effect from a tree ring array
-remove_effect <- function (tra, effect, id, link="log", dep_var="Growth", group=NA)
+remove_effect <- function (tra, effect, id, link="log", dep_var="Growth", group=NULL)
 {
     
   removed_tra <- tra
@@ -51,7 +52,7 @@ remove_effect <- function (tra, effect, id, link="log", dep_var="Growth", group=
   for (effect_id in names(effect))
   {
     # Only affect rows from relevant group
-    if (!is.na(group)){
+    if (!is.null(group)){
       cname <- paste(id, "Split", sep="_")
       relevant_rows <- tra[[id]]==effect_id & tra[[cname]]==group
     } else {
@@ -74,7 +75,7 @@ remove_effect <- function (tra, effect, id, link="log", dep_var="Growth", group=
 # Cleaning up effects ####
 
 # Correctly sort elements of the effect vectors
-sort_effects <- function(effects, tra, split=NA)
+sort_effects <- function(effects, split=NA)
 {
   sorted_effects <- list()
   
@@ -261,7 +262,7 @@ make_skeleton_effects <- function(tra, model, split, link)
     }
   }
   
-  effects <- sort_effects(effects, tra, split)
+  effects <- sort_effects(effects, split)
   
   return(effects)
   
@@ -304,8 +305,8 @@ est_se <- function(resids, model, split=NA, link="log", dep_var="Growth"){
     return(se)
   }
   
-  grab_res <- function(e, E, group=NA){
-    if (!is.na(group)){
+  grab_res <- function(e, E, group=NULL){
+    if (!is.null(group)){
       cname <- paste(E, "Split", sep="_")
       return(resids[resids[[E]]==e & resids[[cname]]==group, dep_var])
     } else {
@@ -350,7 +351,7 @@ est_se <- function(resids, model, split=NA, link="log", dep_var="Growth"){
   names(all_se) <- model
   
   # Sort so names line up
-  all_se <- sort_effects(all_se, resids, split)
+  all_se <- sort_effects(all_se, split)
     
   return(all_se)
 }
