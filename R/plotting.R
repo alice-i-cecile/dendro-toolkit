@@ -8,8 +8,9 @@ make_standardization_plots <- function(effects, se=NULL, dat, split=NA, link="lo
   # Sample depth
   sample_depth_time_plot <- make_sample_depth_plot(dat$original, "Time", split)
   sample_depth_age_plot <- make_sample_depth_plot(dat$original, "Age", split)
-  
-  plots <- c(plots, list(sample_depth_time_plot=sample_depth_time_plot, sample_depth_age_plot=sample_depth_age_plot))
+  series_length_plot <- make_series_length_plot(dat$original, split)
+    
+  plots <- c(plots, list(sample_depth_time_plot=sample_depth_time_plot, sample_depth_age_plot=sample_depth_age_plot, series_length_plot=series_length_plot))
   
   # Tree effect
   if ("Tree" %in% names(effects))
@@ -86,6 +87,46 @@ make_sample_depth_plot <- function(tra, id="Time", split=NA){
   }
 
   return(my_plot)
+}
+
+# Average series length by year
+# Useful for SLC estimation
+make_series_length_plot <- function(tra, split=NA){
+  
+  # Find mean series length
+  mean_series_length <- series_length_tra(tra, split)
+  
+  # Extract and format data
+  if("Time" %in% split)
+  {
+    groups <- names (mean_series_lengthh)
+    dat <- vector(mode="list", length=length(groups))
+    names(dat) <- groups
+    
+    for (group in groups){
+      dat[[group]] <- data.frame(msl=mean_series_length[[group]], id=names(mean_series_length[[group]]), group=group)
+    }
+    
+    dat <- Reduce(rbind, dat)
+    
+  } else {
+    dat <- data.frame(msl=mean_series_length, id=names(mean_series_length))
+  }
+  
+  # Coerce id to numeric value
+  dat$id <- as.numeric(as.character(dat$id))
+  
+  # Make the plot
+  my_plot <- ggplot(dat, aes(x=id, y=msl)) + geom_area() + xlab("Year") + ylab("Mean series length") + theme_bw()
+  
+  # Facet different groups
+  if(id %in% split)
+  {
+    my_plot <- my_plot + facet_grid(group~.)
+  }
+  
+  return(my_plot)
+  
 }
 
 # Effects plotting ####

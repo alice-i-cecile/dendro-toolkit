@@ -80,3 +80,51 @@ sample_depth_tra <- function(tra, id="Time", split=NA){
   
   return (sample_depth)
 }
+
+# Find mean series length by time ####
+# Age, tree not at all useful
+
+series_length_tra <- function(tra, split){
+  ids <- unique(tra$Tree)
+  series_lengths <- sapply(ids, function(id){sum(tra$Tree==id)})
+  names(series_lengths) <- ids
+  years <- unique(tra$Time)
+  
+  if ("Time" %in% split){
+    groups <- unique(tra$Time_Split)
+    
+    mean_series_length <- vector(mode="list", length=length(groups))
+    names(mean_series_length) <- groups
+    
+    for (group in groups){
+      inc_trees <- lapply(years, function(year){
+        as.character(unique(tra[tra$Time==year & tra$Time_Split==group, "Tree"]))
+      })
+      
+      mean_series_length[[group]] <- sapply(inc_trees, function(x){
+        mean(series_lengths[x])
+      })
+      
+      names(mean_series_length) <- years
+    }
+  } else {    
+    inc_trees <- lapply(years, function(year){
+      as.character(unique(tra[tra$Time==year, "Tree"]))
+    })
+    
+    mean_series_length <- sapply(inc_trees, function(x){
+      mean(series_lengths[x])
+    })
+    
+    names(mean_series_length) <- years
+    
+  }
+  
+  # Sorting to correct order
+  msl_list <- list(mean_series_length)
+  names(msl_list) <- "Time"
+  mean_series_length <- sort_effects(msl_list, split)$Time
+  
+  return(mean_series_length)
+  
+}
