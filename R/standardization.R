@@ -55,7 +55,7 @@ standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", d
   print("Standardization complete")
   
   # Make sure elements of effects are in the right order
-  effects <- sort_effects(effects, tra, split)
+  effects <- sort_effects(effects, split)
   
   # Rescale the effects to standard form
   effects <- rescale_effects(effects, link, split)
