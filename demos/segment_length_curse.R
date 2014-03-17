@@ -2,11 +2,11 @@
 set.seed(42)
 
 # Trees
-n_tree <- 20
+n_tree <- 100
 
 # Time
-n_time <- 500
-start_year <- 1500
+n_time <- 2000
+start_year <- 1
 end_year <- start_year + n_time - 1
 
 # Age
@@ -133,10 +133,10 @@ true_effects <- rescale_effects(synchronize_effects(true_effects, trunc_skele_ef
 # Testing out various standardization options ####
 
 # No splitting
-seq_1 <- standardize_tra(tra, optim="sequential", return_data=T)
-alt_1 <- standardize_tra(tra, optim="alternate", return_data=T)
-glm_1 <- standardize_tra(tra, optim="glm", return_data=T)
-gam_1 <- standardize_tra(tra, optim="gam", return_data=T)
+seq_1 <- standardize_tra(tra, optim="sequential")
+alt_1 <- standardize_tra(tra, optim="alternate")
+glm_1 <- standardize_tra(tra, optim="glm")
+gam_1 <- standardize_tra(tra, optim="gam")
 
 # True splitting
 seq_2 <- standardize_tra(tra, optim="sequential", split="Age")
@@ -147,25 +147,10 @@ gam_2 <- standardize_tra(tra, optim="gam", split="Age")
 # Clustered splitting (known number of clusters)
 num_age_groups <- length(unique(tra$Age_Split))
 
-seq_3_clusters <- cluster_tra(seq_1$dat$residuals, num_groups=num_age_groups, clust="pam")
-seq_3_tra <- merge(tra, seq_3_clusters)
-seq_3_tra$Age_Split <- seq_3_tra$clusters
-seq_3 <- standardize_tra(seq_3_tra, optim="sequential", split="Age")
-
-alt_3_clusters <- cluster_tra(alt_1$dat$residuals, num_groups=num_age_groups, clust="pam")
-alt_3_tra <- merge(tra, alt_3_clusters)
-alt_3_tra$Age_Split <- alt_3_tra$clusters
-alt_3 <- standardize_tra(alt_3_tra, optim="alternate", split="Age")
-
-glm_3_clusters <- cluster_tra(glm_1$dat$residuals, num_groups=num_age_groups, clust="pam")
-glm_3_tra <- merge(tra, glm_3_clusters)
-glm_3_tra$Age_Split <- glm_3_tra$clusters
-glm_3 <- standardize_tra(glm_3_tra, optim="glm", split="Age")
-
-gam_3_clusters <- cluster_tra(gam_1$dat$residuals, num_groups=num_age_groups, clust="pam")
-gam_3_tra <- merge(tra, gam_3_clusters)
-gam_3_tra$Age_Split <- gam_3_tra$clusters
-gam_3 <- standardize_tra(gam_3_tra, optim="gam", split="Age")
+seq_3 <- standardize_tra(tra, optim="sequential", split="Age", auto_cluster=TRUE, n_clusters=num_age_groups)
+alt_3 <- standardize_tra(tra, optim="alternate", split="Age", auto_cluster=TRUE, n_clusters=num_age_groups)
+glm_3 <- standardize_tra(tra, optim="glm", split="Age", auto_cluster=TRUE, n_clusters=num_age_groups)
+gam_3 <- standardize_tra(tra, optim="gam", split="Age", auto_cluster=TRUE, n_clusters=num_age_groups)
 
 # Automated clustering
 seq_4 <- standardize_tra(tra, optim="sequential", split="Age", auto_cluster=TRUE)
