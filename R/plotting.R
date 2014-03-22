@@ -120,7 +120,7 @@ make_series_length_plot <- function(tra, split=NA){
   my_plot <- ggplot(dat, aes(x=id, y=msl)) + geom_area() + xlab("Year") + ylab("Mean series length") + theme_bw()
   
   # Facet different groups
-  if(id %in% split)
+  if("Time" %in% split)
   {
     my_plot <- my_plot + facet_grid(group~.)
   }
