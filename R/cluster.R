@@ -7,7 +7,8 @@ auto_cluster_tra <- function(tra, resids, fit, model=c("Age", "Time"), split="Ag
   
   
   # Alternative approach if k is known
-  if (!is.null(n_cluster)){
+  # k = 0 is a convenience shorthand for automatic
+  if (!is.null(n_cluster) & n_cluster!=0){
     k <- n_cluster
     
     #Find clusters 
