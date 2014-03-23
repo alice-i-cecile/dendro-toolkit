@@ -10,12 +10,23 @@ standardize_tra <- function(tra, model=c("Age", "Time"), split=NA, link="log", d
 {
   
   # Exception handling
-  if (ifelse(is.data.frame(tra), sum(tra$G <= 0), sum(tra[tra<=0], na.rm=TRUE) > 0))
+  if (ifelse(is.data.frame(tra), sum(tra[[dep_var]] <= 0), sum(tra[tra<=0], na.rm=TRUE) > 0))
   {
     # Raise a warning if negative values found for multiplicative models
     if (link == "log")
     {
-      stop("Zero or negative values cannot be used. Estimated effects will not be stable.")
+      tra[tra[[dep_var]]<=0, dep_var] <- NA
+      warning("Zero or negative values cannot be used. Affected data points were set to NA.")
+    }
+  }
+  
+  # Ignore split if column is missing
+  if (!is.na(split)){
+    cname <- paste(split, "Split", sep="_")
+    
+    if (any(is.null(tra[[cname]])) & !auto_cluster){
+      split <- NA
+      warning(paste(cname, "column was missing. Split was ignored."))
     }
   }
   
