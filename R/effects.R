@@ -276,10 +276,22 @@ synchronize_effects <- function(effects, skele, split){
       groups <- names(skele[[id]])
       synched <- list()
       for (group in groups){
+        # Only include effects that are present in skeleton
         synched[[group]] <- effects[[id]][[group]][names(effects[[id]][[group]]) %in% names(skele[[id]][[group]])]
+        
+        # Use skeleton values for missing effects
+        missing_e <- skele[[id]][[group]]!(names(skele[[id]][[group]]) %in% names(effects[[id]][[group]]))
+        
+        synched[[group]] <- c(synched[[group]], missing_e)
+        
       }
     } else {
       synched <- effects[[id]][names(effects[[id]]) %in% names(skele[[id]])]
+      
+      # Use skeleton values for missing effects
+      missing_e <- skele[[id]]!(names(skele[[id]]) %in% names(effects[[id]]))
+      
+      synched <- c(synched, missing_e)
     }
     
     return(synched)
@@ -288,6 +300,8 @@ synchronize_effects <- function(effects, skele, split){
     
   all_synched <- lapply(names(effects), synch_effect)
   names(all_synched) <- names(effects)
+  
+  all_synched <- sort_effects(all_synched, split)
   
   return(all_synched)
 }
